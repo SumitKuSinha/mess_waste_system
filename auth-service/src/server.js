@@ -1,5 +1,6 @@
 const app = require('./app');
 const connectDB = require('./config/db');
+const logger = require('./utils/logger');
 require('dotenv').config();
 
 const PORT = process.env.PORT || 5001;
@@ -7,5 +8,5 @@ const PORT = process.env.PORT || 5001;
 connectDB();
 
 app.listen(PORT, () => {
-  console.log(`✅ Auth Service running on port ${PORT}`);
+  logger.info(`Auth Service running on port ${PORT}`);
 });

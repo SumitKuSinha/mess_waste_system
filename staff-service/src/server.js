@@ -1,8 +1,9 @@
 const app = require('./app');
+const logger = require('./utils/logger');
 require('dotenv').config();
 
 const PORT = process.env.PORT || 5005;
 
 app.listen(PORT, () => {
-  console.log(`✅ Staff Service running on port ${PORT}`);
+  logger.info(`Staff Service running on port ${PORT}`);
 });

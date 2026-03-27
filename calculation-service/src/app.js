@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const app = express();
@@ -9,6 +10,15 @@ const app = express();
 const calculateRoutes = require('./routes/calculate.routes');
 const wasteRoutes = require('./routes/waste.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
+
+// Rate limiter: 100 requests per 15 minutes
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: {
+    message: 'Too many requests, please try again later'
+  }
+});
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI, {
@@ -26,6 +36,7 @@ mongoose.connect(process.env.MONGO_URI, {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
+app.use(limiter);
 
 // Routes
 app.get('/health', (req, res) => {
