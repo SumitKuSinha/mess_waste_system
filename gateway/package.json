@@ -1,4 +1,12 @@
 {
+  "name": "api-gateway",
+  "version": "1.0.0",
+  "description": "API Gateway for Smart Mess System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
   "dependencies": {
     "cors": "^2.8.6",
     "express": "^5.2.1",

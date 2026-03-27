@@ -15,7 +15,11 @@ async function runCalculation(date) {
     console.log(`[CALCULATION] Processing date: ${date}`);
 
     // Step 1: Get all responses from Response Service (API call)
-    const responseRes = await axios.get(`http://localhost:5003/api/response/all?date=${date}`);
+    console.log(`[CALCULATION] 🌐 Fetching responses from localhost:5003...`);
+    const responseRes = await axios.get(`http://localhost:5003/api/response/all?date=${date}`, {
+      timeout: 5000
+    });
+    console.log(`[CALCULATION] ✅ Got response from service: ${responseRes.status}`);
     const responses = responseRes.data.data;
 
     if (!responses || responses.length === 0) {
@@ -44,7 +48,11 @@ async function runCalculation(date) {
     console.log(`[CALCULATION] Meal counts - Breakfast: ${breakfastCount}, Lunch: ${lunchCount}, Dinner: ${dinnerCount}`);
 
     // Step 3: Get menu from Menu Service (API call)
-    const menuRes = await axios.get(`http://localhost:5002/api/menu/get/${date}`);
+    console.log(`[CALCULATION] 🌐 Fetching menu from localhost:5002...`);
+    const menuRes = await axios.get(`http://localhost:5002/api/menu/get/${date}`, {
+      timeout: 5000
+    });
+    console.log(`[CALCULATION] ✅ Got menu from service: ${menuRes.status}`);
     const menu = menuRes.data;
 
     if (!menu) {
@@ -134,7 +142,17 @@ async function runCalculation(date) {
     };
 
   } catch (error) {
-    console.error(`[CALCULATION] ❌ Error calculating meals for ${date}:`, error.message);
+    console.error(`[CALCULATION] ❌ Error calculating meals for ${date}`);
+    console.error(`[CALCULATION] Error type:`, error.code || error.name);
+    console.error(`[CALCULATION] Error message:`, error.message);
+    if (error.response) {
+      console.error(`[CALCULATION] Response status:`, error.response.status);
+      console.error(`[CALCULATION] Response data:`, error.response.data);
+    } else if (error.request) {
+      console.error(`[CALCULATION] No response received - request made but no reply`);
+    } else {
+      console.error(`[CALCULATION] Error details:`, error);
+    }
     return {
       success: false,
       message: 'Error calculating meals',

@@ -65,6 +65,15 @@ app.use('/api/dashboard', createProxyMiddleware({
   }
 }));
 
+// WASTE SERVICE (port 5004)
+app.use('/api/waste', createProxyMiddleware({
+  target: 'http://localhost:5004',
+  changeOrigin: true,
+  pathRewrite: {
+    '^': '/api/waste'
+  }
+}));
+
 // STAFF SERVICE (port 5005)
 app.use('/api/staff', createProxyMiddleware({
   target: 'http://localhost:5005',

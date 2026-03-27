@@ -4,8 +4,8 @@ const Waste = require('../models/waste.model');
 const authMiddleware = require('../middleware/auth');
 const roleMiddleware = require('../middleware/role');
 
-// POST /api/waste/add - Save waste data (staff/admin only)
-router.post('/add', authMiddleware, roleMiddleware('staff', 'admin'), async (req, res) => {
+// POST /api/waste/add - Save waste data (staff only)
+router.post('/add', authMiddleware, roleMiddleware('staff'), async (req, res) => {
   console.log("HEADERS:", req.headers.authorization);
   console.log("USER:", req.user);
   try {

@@ -3,6 +3,7 @@ const router = express.Router();
 
 const Response = require("../models/response.model");
 const authMiddleware = require("../middleware/auth");
+const { sendToQueue } = require("../utils/rabbitmq");
 
 // submit response
 router.post("/submit", authMiddleware, async (req, res) => {
@@ -55,6 +56,14 @@ router.post("/submit", authMiddleware, async (req, res) => {
       studentId,
       date,
       meals,
+    });
+
+    // Send message to RabbitMQ for calculation service
+    sendToQueue({
+      type: "NEW_RESPONSE",
+      date: date,
+      studentId: studentId,
+      meals: meals
     });
 
     res.status(201).json({ message: "Response saved", response });
@@ -162,6 +171,37 @@ router.get('/all', async (req, res) => {
   } catch (error) {
     console.error('Error fetching responses:', error);
     res.status(500).json({ message: "Error fetching responses" });
+  }
+});
+
+// delete response
+router.delete("/delete", authMiddleware, async (req, res) => {
+  try {
+    const { date } = req.body;
+    const studentId = req.user.id;
+
+    // Role check: Only students can delete their responses
+    if (req.user.role !== "student") {
+      return res.status(403).json({ message: "Only students can delete their response" });
+    }
+
+    // Validation: Check if date is provided
+    if (!date) {
+      return res.status(400).json({ message: "Date is required" });
+    }
+
+    // Delete response if it exists
+    const deleted = await Response.findOneAndDelete(
+      { studentId, date }
+    );
+
+    if (!deleted) {
+      return res.status(404).json({ message: "No response found for this date" });
+    }
+
+    res.status(200).json({ message: "Response deleted successfully", response: deleted });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting response", error: error.message });
   }
 });
 

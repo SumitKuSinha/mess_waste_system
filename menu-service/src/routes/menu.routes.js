@@ -57,4 +57,52 @@ router.get("/get/:date", async (req, res) => {
   }
 });
 
+// update menu (admin only)
+router.put("/update", authMiddleware, roleMiddleware("admin"), async (req, res) => {
+  try {
+    const { date, items } = req.body;
+
+    if (!date || !items) {
+      return res.status(400).json({ error: "Date and items are required" });
+    }
+
+    const updatedMenu = await Menu.findOneAndUpdate(
+      { date },
+      { items },
+      { new: true }
+    );
+
+    if (!updatedMenu) {
+      return res.status(404).json({ message: "Menu not found for this date" });
+    }
+
+    res.status(200).json({ message: "Menu updated", menu: updatedMenu });
+  } catch (error) {
+    console.error("Error updating menu:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// delete menu (admin only)
+router.delete("/delete", authMiddleware, roleMiddleware("admin"), async (req, res) => {
+  try {
+    const { date } = req.body;
+
+    if (!date) {
+      return res.status(400).json({ error: "Date is required" });
+    }
+
+    const deletedMenu = await Menu.findOneAndDelete({ date });
+
+    if (!deletedMenu) {
+      return res.status(404).json({ message: "Menu not found for this date" });
+    }
+
+    res.status(200).json({ message: "Menu deleted successfully", menu: deletedMenu });
+  } catch (error) {
+    console.error("Error deleting menu:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;
