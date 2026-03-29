@@ -35,6 +35,11 @@ function AdminPanel() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
+  // Waste Tracking States
+  const [wasteDate, setWasteDate] = useState('');
+  const [wasteData, setWasteData] = useState(null);
+  const [wasteHistory, setWasteHistory] = useState([]);
+
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   // Logout handler
@@ -179,6 +184,40 @@ function AdminPanel() {
         setMessage(`✗ Error: ${error.message}`);
       }
     } catch (error) {
+      setMessage(`✗ Error: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch waste data for a specific date
+  const handleFetchWasteData = async () => {
+    if (!wasteDate) {
+      setMessage('Please select a date');
+      return;
+    }
+
+    setLoading(true);
+    setMessage('');
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/dashboard/${wasteDate}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setWasteData(data.data);
+        setMessage('✓ Waste data loaded');
+        setTimeout(() => setMessage(''), 2000);
+      } else {
+        setWasteData(null);
+        setMessage('✗ No waste data found for this date. Staff may not have submitted yet.');
+      }
+    } catch (error) {
+      setWasteData(null);
       setMessage(`✗ Error: ${error.message}`);
     } finally {
       setLoading(false);
@@ -869,10 +908,162 @@ function AdminPanel() {
           {/* WASTE TRACKING SECTION */}
           {activeSection === 'waste' && (
             <div className="page-section">
-              <h2>Waste Tracking</h2>
-              <div className="empty-state">
-                <p>Waste tracking section coming soon...</p>
+              <h2>Waste Tracking & Analysis</h2>
+
+              {message && (
+                <div className={`message ${message.startsWith('✓') ? 'success' : 'error'}`}>
+                  {message}
+                </div>
+              )}
+
+              {/* Date Selection */}
+              <div className="form-group">
+                <label>Select Date to View Waste Report</label>
+                <div className="date-input-group">
+                  <input
+                    type="date"
+                    value={wasteDate}
+                    onChange={(e) => setWasteDate(e.target.value)}
+                  />
+                  <button
+                    className="btn btn-primary"
+                    onClick={handleFetchWasteData}
+                    disabled={loading}
+                  >
+                    {loading ? 'Loading...' : 'View Waste Report'}
+                  </button>
+                </div>
               </div>
+
+              {/* Waste Report Display */}
+              {wasteData ? (
+                <div className="waste-report">
+                  <div className="report-header">
+                    <h3>Waste Analysis Report - {wasteData.date}</h3>
+                    <p className="report-date">Total Responses: {wasteData.totalResponses}</p>
+                  </div>
+
+                  {/* Summary Cards */}
+                  <div className="waste-summary">
+                    {/* Waste Summary */}
+                    <div className="summary-card waste-card">
+                      <h4>📊 Waste Summary</h4>
+                      <div className="summary-items">
+                        <div className="summary-item">
+                          <span className="label">Total Items with Waste:</span>
+                          <span className="value">{wasteData.summary.waste.totalWasteItems}</span>
+                        </div>
+                        <div className="summary-item">
+                          <span className="label">Total Waste Quantity:</span>
+                          <span className="value">{wasteData.summary.waste.totalWasteQuantity} kg</span>
+                        </div>
+                        <div className="summary-item">
+                          <span className="label">Average Waste %:</span>
+                          <span className="value">{wasteData.summary.waste.averageWastePercentage}%</span>
+                        </div>
+                        {wasteData.summary.waste.topWastedItem && (
+                          <div className="summary-item">
+                            <span className="label">Top Wasted Item:</span>
+                            <span className="value">{wasteData.summary.waste.topWastedItem.item} ({wasteData.summary.waste.topWastedItem.quantity} kg)</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Surplus Summary */}
+                    <div className="summary-card surplus-card">
+                      <h4>📈 Surplus Summary</h4>
+                      <div className="summary-items">
+                        <div className="summary-item">
+                          <span className="label">Total Items with Surplus:</span>
+                          <span className="value">{wasteData.summary.surplus.totalSurplusItems}</span>
+                        </div>
+                        <div className="summary-item">
+                          <span className="label">Total Surplus Quantity:</span>
+                          <span className="value">{wasteData.summary.surplus.totalSurplusQuantity} kg</span>
+                        </div>
+                        {wasteData.summary.surplus.topSurplusItem && (
+                          <div className="summary-item">
+                            <span className="label">Top Surplus Item:</span>
+                            <span className="value">{wasteData.summary.surplus.topSurplusItem.item} ({wasteData.summary.surplus.topSurplusItem.quantity} kg)</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Detailed Breakdown */}
+                  <div className="waste-breakdown">
+                    <h3>Detailed Ingredient Breakdown</h3>
+
+                    {/* Waste Items */}
+                    {Object.keys(wasteData.waste).length > 0 && (
+                      <div className="breakdown-section">
+                        <h4>⚠️ Items with Waste</h4>
+                        <div className="breakdown-table">
+                          <div className="table-header">
+                            <div className="col-item">Ingredient</div>
+                            <div className="col-qty">Expected (kg)</div>
+                            <div className="col-qty">Actual (kg)</div>
+                            <div className="col-qty">Waste (kg)</div>
+                            <div className="col-percent">Waste %</div>
+                          </div>
+                          {Object.entries(wasteData.waste).map(([item, wasteQty]) => (
+                            <div key={item} className="table-row">
+                              <div className="col-item">{item}</div>
+                              <div className="col-qty">{wasteData.totalIngredients[item]?.toFixed(2)}</div>
+                              <div className="col-qty">{(wasteData.totalIngredients[item] - wasteQty).toFixed(2)}</div>
+                              <div className="col-qty">{wasteQty.toFixed(2)}</div>
+                              <div className="col-percent">{wasteData.wastePercentage[item]}%</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Surplus Items */}
+                    {Object.keys(wasteData.surplus).length > 0 && (
+                      <div className="breakdown-section">
+                        <h4>✅ Items with Surplus</h4>
+                          <div className="breakdown-table">
+                          <div className="table-header">
+                            <div className="col-item">Ingredient</div>
+                            <div className="col-qty">Expected (kg)</div>
+                            <div className="col-qty">Actual (kg)</div>
+                            <div className="col-qty">Surplus (kg)</div>
+                            <div className="col-percent" style={{visibility:'hidden'}}>-</div>
+                          </div>
+                          {Object.entries(wasteData.surplus).map(([item, surplusQty]) => (
+                            <div key={item} className="table-row surplus-row">
+                              <div className="col-item">{item}</div>
+                              <div className="col-qty">{wasteData.totalIngredients[item]?.toFixed(2)}</div>
+                              <div className="col-qty">{(wasteData.totalIngredients[item] + surplusQty).toFixed(2)}</div>
+                              <div className="col-qty">{surplusQty.toFixed(2)}</div>
+                              <div className="col-percent" style={{visibility:'hidden'}}>-</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* High Waste Items Alert */}
+                    {wasteData.summary.waste.highWasteItems.length > 0 && (
+                      <div className="alert alert-warning">
+                        <h4>⚠️ High Waste Items (>10%)</h4>
+                        {wasteData.summary.waste.highWasteItems.map(item => (
+                          <div key={item.item} className="alert-item">
+                            {item.item}: {item.wastePercent}% waste
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="empty-state">
+                  <p>Select a date and click "View Waste Report" to see waste analysis</p>
+                </div>
+              )}
             </div>
           )}
         </div>

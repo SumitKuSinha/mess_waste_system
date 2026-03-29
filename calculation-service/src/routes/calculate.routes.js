@@ -56,8 +56,8 @@ router.get('/history', authMiddleware, roleMiddleware('admin'), async (req, res)
   }
 });
 
-// GET /api/calculate/:date - Calculate total ingredients needed for a given date
-router.get('/:date', authMiddleware, roleMiddleware('admin'), async (req, res) => {
+// GET /api/calculate/:date - Calculate total ingredients needed for a given date (admin & staff)
+router.get('/:date', authMiddleware, roleMiddleware('admin', 'staff'), async (req, res) => {
   try {
     const { date } = req.params;
 

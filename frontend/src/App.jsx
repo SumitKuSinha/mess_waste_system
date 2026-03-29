@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import AdminPanel from './pages/AdminPanel';
 import StudentDashboard from './pages/StudentDashboard';
+import StaffDashboard from './pages/StaffDashboard';
 import './App.css';
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/admin-panel" element={<AdminPanel />} />
         <Route path="/student-dashboard" element={<StudentDashboard />} />
+        <Route path="/staff-dashboard" element={<StaffDashboard />} />
       </Routes>
     </Router>
   );

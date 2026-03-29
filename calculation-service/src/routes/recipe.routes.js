@@ -32,7 +32,7 @@ const DEFAULT_RECIPES = [
   { name: 'Pasta', category: 'dinner', ingredients: [{ item: 'Pasta', qtyPerPerson: 120 }, { item: 'Tomato Sauce', qtyPerPerson: 100 }, { item: 'Vegetables', qtyPerPerson: 60 }, { item: 'Oil', qtyPerPerson: 10 }] },
   { name: 'Khichdi', category: 'dinner', ingredients: [{ item: 'Rice', qtyPerPerson: 80 }, { item: 'Dal', qtyPerPerson: 30 }, { item: 'Vegetables', qtyPerPerson: 60 }, { item: 'Ghee', qtyPerPerson: 10 }, { item: 'Salt', qtyPerPerson: 2 }] },
   { name: 'Pulao', category: 'dinner', ingredients: [{ item: 'Rice', qtyPerPerson: 120 }, { item: 'Vegetables', qtyPerPerson: 100 }, { item: 'Spices', qtyPerPerson: 8 }, { item: 'Oil', qtyPerPerson: 15 }] },
-  { name: 'Fried Rice', category: 'dinner', ingredients: [{ item: 'Rice', qtyPerPerson: 120 }, { item: 'Vegetables', qtyPerPerson: 100 }, { item: 'Egg', qtyPerPerson: 50 }, { item: 'Soy Sauce', qtyPerPerson: 10 }, { item: 'Oil', qtyPerPerson: 20 }] }
+  { name: 'Fried Rice', category: 'dinner', ingredients: [{ item: 'Rice', qtyPerPerson: 120 }, { item: 'Vegetables', qtyPerPerson: 100 }, { item: 'Egg', qtyPerPerson: 100 }, { item: 'Soy Sauce', qtyPerPerson: 10 }, { item: 'Oil', qtyPerPerson: 20 }] }
 ];
 
 // Seed recipes (admin only)

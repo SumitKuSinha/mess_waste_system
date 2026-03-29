@@ -67,6 +67,32 @@ async function runCalculation(date) {
       dinner: {}
     };
 
+    // Store units separately so frontend knows how to display
+    const ingredientUnits = {
+      breakfast: {},
+      lunch: {},
+      dinner: {}
+    };
+
+    // Helper function to convert quantity based on unit
+    const convertQty = (qty, unit) => {
+      // Convert pieces to grams (1 piece = 60g)
+      if (unit === 'piece' || unit === 'pieces') {
+        return (qty * 60) / 1000; // Convert pieces to grams, then to kg
+      }
+      // For grams, convert to kg
+      if (unit === 'g' || unit === 'gram' || unit === 'grams') {
+        return qty / 1000; // Convert grams to kg for storage
+      }
+      // For other units (ml, ml, etc.), keep as-is
+      return qty;
+    };
+
+    // Helper to get display unit (always kg for calculation display)
+    const getDisplayUnit = (unit) => {
+      return 'kg'; // Always display as kg
+    };
+
     // Process breakfast items
     for (let item of menu.items?.breakfast || []) {
       const recipe = await Recipe.findOne({ name: item });
@@ -75,9 +101,11 @@ async function runCalculation(date) {
       recipe.ingredients.forEach(ing => {
         const totalQty = ing.qtyPerPerson * breakfastCount;
         const finalQty = totalQty + (totalQty * WASTAGE_PERCENT / 100);
-        // Convert grams to kg (divide by 1000)
-        const finalQtyKg = finalQty / 1000;
-        ingredients.breakfast[ing.item] = (ingredients.breakfast[ing.item] || 0) + finalQtyKg;
+        const convertedQty = convertQty(finalQty, ing.unit);
+        const displayUnit = getDisplayUnit(ing.unit);
+        
+        ingredients.breakfast[ing.item] = (ingredients.breakfast[ing.item] || 0) + convertedQty;
+        ingredientUnits.breakfast[ing.item] = displayUnit;
       });
     }
 
@@ -89,9 +117,11 @@ async function runCalculation(date) {
       recipe.ingredients.forEach(ing => {
         const totalQty = ing.qtyPerPerson * lunchCount;
         const finalQty = totalQty + (totalQty * WASTAGE_PERCENT / 100);
-        // Convert grams to kg (divide by 1000)
-        const finalQtyKg = finalQty / 1000;
-        ingredients.lunch[ing.item] = (ingredients.lunch[ing.item] || 0) + finalQtyKg;
+        const convertedQty = convertQty(finalQty, ing.unit);
+        const displayUnit = getDisplayUnit(ing.unit);
+        
+        ingredients.lunch[ing.item] = (ingredients.lunch[ing.item] || 0) + convertedQty;
+        ingredientUnits.lunch[ing.item] = displayUnit;
       });
     }
 
@@ -103,9 +133,11 @@ async function runCalculation(date) {
       recipe.ingredients.forEach(ing => {
         const totalQty = ing.qtyPerPerson * dinnerCount;
         const finalQty = totalQty + (totalQty * WASTAGE_PERCENT / 100);
-        // Convert grams to kg (divide by 1000)
-        const finalQtyKg = finalQty / 1000;
-        ingredients.dinner[ing.item] = (ingredients.dinner[ing.item] || 0) + finalQtyKg;
+        const convertedQty = convertQty(finalQty, ing.unit);
+        const displayUnit = getDisplayUnit(ing.unit);
+        
+        ingredients.dinner[ing.item] = (ingredients.dinner[ing.item] || 0) + convertedQty;
+        ingredientUnits.dinner[ing.item] = displayUnit;
       });
     }
 
@@ -124,6 +156,7 @@ async function runCalculation(date) {
         dinner: dinnerCount,
         totalResponses: responses.length,
         ingredients,
+        ingredientUnits,
         updatedAt: new Date()
       },
       { upsert: true, new: true }
@@ -143,6 +176,7 @@ async function runCalculation(date) {
           dinner: calculationData.dinner
         },
         ingredients: calculationData.ingredients,
+        ingredientUnits: calculationData.ingredientUnits,
         savedAt: calculationData.updatedAt
       }
     };

@@ -35,7 +35,7 @@ function LoginPage() {
         } else if (role === 'admin') {
           navigate('/admin-panel');
         } else if (role === 'staff') {
-          navigate('/staff-panel');
+          navigate('/staff-dashboard');
         }
       }
     } catch (err) {
