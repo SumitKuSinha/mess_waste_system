@@ -72,7 +72,24 @@ router.post("/submit", authMiddleware, async (req, res) => {
   }
 });
 
-// get student response
+// get all responses for current student
+router.get("/my-all", authMiddleware, async (req, res) => {
+  try {
+    const studentId = req.user.id;
+
+    const responses = await Response.find({ studentId }).sort({ date: -1 });
+
+    if (!responses || responses.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    res.json(responses);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching responses" });
+  }
+});
+
+// get student response for specific date
 router.get("/my", authMiddleware, async (req, res) => {
   try {
     const { date } = req.query;

@@ -75,7 +75,9 @@ async function runCalculation(date) {
       recipe.ingredients.forEach(ing => {
         const totalQty = ing.qtyPerPerson * breakfastCount;
         const finalQty = totalQty + (totalQty * WASTAGE_PERCENT / 100);
-        ingredients.breakfast[ing.item] = (ingredients.breakfast[ing.item] || 0) + finalQty;
+        // Convert grams to kg (divide by 1000)
+        const finalQtyKg = finalQty / 1000;
+        ingredients.breakfast[ing.item] = (ingredients.breakfast[ing.item] || 0) + finalQtyKg;
       });
     }
 
@@ -87,7 +89,9 @@ async function runCalculation(date) {
       recipe.ingredients.forEach(ing => {
         const totalQty = ing.qtyPerPerson * lunchCount;
         const finalQty = totalQty + (totalQty * WASTAGE_PERCENT / 100);
-        ingredients.lunch[ing.item] = (ingredients.lunch[ing.item] || 0) + finalQty;
+        // Convert grams to kg (divide by 1000)
+        const finalQtyKg = finalQty / 1000;
+        ingredients.lunch[ing.item] = (ingredients.lunch[ing.item] || 0) + finalQtyKg;
       });
     }
 
@@ -99,7 +103,9 @@ async function runCalculation(date) {
       recipe.ingredients.forEach(ing => {
         const totalQty = ing.qtyPerPerson * dinnerCount;
         const finalQty = totalQty + (totalQty * WASTAGE_PERCENT / 100);
-        ingredients.dinner[ing.item] = (ingredients.dinner[ing.item] || 0) + finalQty;
+        // Convert grams to kg (divide by 1000)
+        const finalQtyKg = finalQty / 1000;
+        ingredients.dinner[ing.item] = (ingredients.dinner[ing.item] || 0) + finalQtyKg;
       });
     }
 

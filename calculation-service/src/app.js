@@ -10,6 +10,7 @@ const app = express();
 const calculateRoutes = require('./routes/calculate.routes');
 const wasteRoutes = require('./routes/waste.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
+const recipeRoutes = require('./routes/recipe.routes');
 
 // Rate limiter: 100 requests per 15 minutes
 const limiter = rateLimit({
@@ -56,5 +57,8 @@ app.use('/api/waste', wasteRoutes);
 
 // Dashboard routes
 app.use('/api/dashboard', dashboardRoutes);
+
+// Recipe routes
+app.use('/api/recipe', recipeRoutes);
 
 module.exports = app;

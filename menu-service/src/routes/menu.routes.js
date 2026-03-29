@@ -7,10 +7,20 @@ const roleMiddleware = require("../middleware/role");
 // add menu (admin only)
 router.post("/add", authMiddleware, roleMiddleware("admin"), async (req, res) => {
   try {
-    const { date, items } = req.body;
+    const { date, breakfast, lunch, dinner } = req.body;
 
-    if (!date || !items) {
-      return res.status(400).json({ error: "Date and items are required" });
+    if (!date) {
+      return res.status(400).json({ error: "Date is required" });
+    }
+
+    // Accept both formats: items object or breakfast/lunch/dinner directly
+    let items = req.body.items;
+    if (!items && (breakfast || lunch || dinner)) {
+      items = { breakfast, lunch, dinner };
+    }
+
+    if (!items) {
+      return res.status(400).json({ error: "Items are required" });
     }
 
     const menu = await Menu.create({ date, items });
@@ -31,7 +41,13 @@ router.get("/:date", async (req, res) => {
       return res.status(404).json({ message: "Menu not found for this date" });
     }
 
-    res.json(menu);
+    // Return data in the same format frontend sends (breakfast, lunch, dinner at top level)
+    res.json({
+      date: menu.date,
+      breakfast: menu.items.breakfast || [],
+      lunch: menu.items.lunch || [],
+      dinner: menu.items.dinner || []
+    });
   } catch (error) {
     console.error("Error fetching menu:", error.message);
     res.status(500).json({ error: error.message });
@@ -60,10 +76,20 @@ router.get("/get/:date", async (req, res) => {
 // update menu (admin only)
 router.put("/update", authMiddleware, roleMiddleware("admin"), async (req, res) => {
   try {
-    const { date, items } = req.body;
+    const { date, breakfast, lunch, dinner } = req.body;
 
-    if (!date || !items) {
-      return res.status(400).json({ error: "Date and items are required" });
+    if (!date) {
+      return res.status(400).json({ error: "Date is required" });
+    }
+
+    // Accept both formats: items object or breakfast/lunch/dinner directly
+    let items = req.body.items;
+    if (!items && (breakfast || lunch || dinner)) {
+      items = { breakfast, lunch, dinner };
+    }
+
+    if (!items) {
+      return res.status(400).json({ error: "Items are required" });
     }
 
     const updatedMenu = await Menu.findOneAndUpdate(
