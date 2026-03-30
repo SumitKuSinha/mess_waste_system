@@ -4,6 +4,7 @@ const router = express.Router();
 const Response = require("../models/response.model");
 const authMiddleware = require("../middleware/auth");
 const { sendToQueue } = require("../utils/rabbitmq");
+const { setCache, getCache, deleteCache } = require("../config/redis");
 
 // submit response
 router.post("/submit", authMiddleware, async (req, res) => {
@@ -58,6 +59,10 @@ router.post("/submit", authMiddleware, async (req, res) => {
       meals,
     });
 
+    // Clear cache for this date since new response added
+    await deleteCache(`responses:${date}`);
+    console.log(`✅ Response cache cleared for ${date}`);
+
     // Send message to RabbitMQ for calculation service
     sendToQueue({
       type: "NEW_RESPONSE",
@@ -76,12 +81,27 @@ router.post("/submit", authMiddleware, async (req, res) => {
 router.get("/my-all", authMiddleware, async (req, res) => {
   try {
     const studentId = req.user.id;
+    const cacheKey = `responses:my-all:${studentId}`;
+
+    // Check cache first
+    const cachedResponses = await getCache(cacheKey);
+    if (cachedResponses) {
+      console.log(`✅ Student responses cache hit for ${studentId}`);
+      if (!cachedResponses || cachedResponses.length === 0) {
+        return res.status(200).json([]);
+      }
+      return res.json(cachedResponses);
+    }
 
     const responses = await Response.find({ studentId }).sort({ date: -1 });
 
     if (!responses || responses.length === 0) {
       return res.status(200).json([]);
     }
+
+    // Cache for 1 hour
+    await setCache(cacheKey, responses, 3600);
+    console.log(`✅ Student responses cached for ${studentId}`);
 
     res.json(responses);
   } catch (error) {
@@ -99,6 +119,15 @@ router.get("/my", authMiddleware, async (req, res) => {
       return res.status(400).json({ message: "Date is required" });
     }
 
+    const cacheKey = `response:my:${studentId}:${date}`;
+
+    // Check cache first
+    const cachedResponse = await getCache(cacheKey);
+    if (cachedResponse) {
+      console.log(`✅ Response cache hit for ${studentId}:${date}`);
+      return res.json(cachedResponse);
+    }
+
     const response = await Response.findOne({
       studentId,
       date,
@@ -108,10 +137,16 @@ router.get("/my", authMiddleware, async (req, res) => {
       return res.status(404).json({ message: "No response found for this date" });
     }
 
-    res.json({
+    const responseData = {
       date: response.date,
       meals: response.meals,
-    });
+    };
+
+    // Cache for 24 hours
+    await setCache(cacheKey, responseData, 86400);
+    console.log(`✅ Response cached for ${studentId}:${date}`);
+
+    res.json(responseData);
   } catch (error) {
     res.status(500).json({ message: "Error fetching response" });
   }
@@ -163,6 +198,12 @@ router.put("/update", authMiddleware, async (req, res) => {
       return res.status(404).json({ message: "No response found for this date" });
     }
 
+    // Clear cache for this response
+    await deleteCache(`response:my:${studentId}:${date}`);
+    await deleteCache(`responses:my-all:${studentId}`);
+    await deleteCache(`responses:${date}`);
+    console.log(`✅ Response cache cleared for ${date}`);
+
     res.status(200).json({ message: "Response updated", response: updated });
   } catch (error) {
     res.status(500).json({ message: "Error updating response" });
@@ -178,7 +219,24 @@ router.get('/all', async (req, res) => {
       return res.status(400).json({ message: "Date is required" });
     }
 
+    const cacheKey = `responses:${date}`;
+
+    // Check cache first
+    const cachedResponses = await getCache(cacheKey);
+    if (cachedResponses) {
+      console.log(`✅ Responses cache hit for ${date}`);
+      return res.status(200).json({
+        message: "Responses retrieved",
+        total: cachedResponses.length,
+        data: cachedResponses
+      });
+    }
+
     const responses = await Response.find({ date });
+
+    // Cache for 24 hours
+    await setCache(cacheKey, responses, 86400);
+    console.log(`✅ Responses cached for ${date}`);
 
     res.status(200).json({
       message: "Responses retrieved",
@@ -215,6 +273,11 @@ router.delete("/delete", authMiddleware, async (req, res) => {
     if (!deleted) {
       return res.status(404).json({ message: "No response found for this date" });
     }
+
+    // Clear cache for this date
+    await deleteCache(`response:my:${studentId}:${date}`);
+    await deleteCache(`responses:my-all:${studentId}`);
+    await deleteCache(`responses:${date}`);
 
     res.status(200).json({ message: "Response deleted successfully", response: deleted });
   } catch (error) {

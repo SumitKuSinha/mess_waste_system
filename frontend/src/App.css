@@ -1,4 +1,31 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap');
+
 /* Global App Styles */
+
+:root {
+  --font-sans: 'Sora', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --primary-color: #d67229;
+  --secondary-color: #d67229;
+  --primary-dark: #d67229;
+  --dark-bg: #1A1A1A;
+  --grey-bg: #2A2A2A;
+  --light-grey: #3A3A3A;
+  --text-light: #FFFFFF;
+  --text-dark: #1F1F1F;
+  --text-muted: #BDBDBD;
+  --border-color: #FFFFFF;
+  --accent-black: #000000;
+
+  /* Semantic aliases for dashboard/auth pages */
+  --primary: var(--primary-color);
+  --primary-light: var(--secondary-color);
+  --bg-dark: var(--dark-bg);
+  --bg-light: #FFF7ED;
+  --border: #FED7AA;
+  --success: #22C55E;
+  --danger: #EF4444;
+  --warning: #F59E0B;
+}
 
 * {
   margin: 0;
@@ -11,10 +38,10 @@ html {
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: var(--font-sans);
   line-height: 1.6;
-  color: #333;
-  background: #f5f5f5;
+  color: var(--text-light);
+  background: radial-gradient(circle at top left, #242424 0%, var(--dark-bg) 55%, #101010 100%);
 }
 
 #root {
@@ -30,16 +57,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--grey-bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #FF6B6B;
+  background: var(--primary-color);
   border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #F58A7C;
+  background: var(--secondary-color);
 }
 
 /* Link Styles */
@@ -49,13 +76,13 @@ a {
 
 /* Focus Visible for Accessibility */
 :focus-visible {
-  outline: 2px solid #FF6B6B;
+  outline: 2px solid var(--primary-color);
   outline-offset: 2px;
 }
 
 /* Selection Color */
 ::selection {
-  background: #FF6B6B;
+  background: var(--primary-color);
   color: white;
 }
 
@@ -71,7 +98,7 @@ a {
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, #FF6B6B, #F58A7C);
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -79,20 +106,20 @@ a {
 
 /* Error Boundaries */
 .error-boundary {
-  background: #ffe5e5;
-  border: 2px solid #FF6B6B;
+  background: rgba(239, 68, 68, 0.12);
+  border: 2px solid var(--danger);
   padding: 2rem;
   border-radius: 10px;
   text-align: center;
 }
 
 .error-boundary h1 {
-  color: #FF6B6B;
+  color: #FFB4B4;
   margin-bottom: 1rem;
 }
 
 .error-boundary p {
-  color: #666;
+  color: var(--text-light);
   margin-bottom: 1rem;
 }
 
@@ -100,8 +127,8 @@ a {
 .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #FF6B6B;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  border-top: 4px solid var(--primary-color);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -117,8 +144,8 @@ a {
   bottom: 20px;
   right: 20px;
   padding: 1rem 1.5rem;
-  background: white;
-  border-left: 4px solid #FF6B6B;
+  background: var(--grey-bg);
+  border-left: 4px solid var(--primary-color);
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 9999;

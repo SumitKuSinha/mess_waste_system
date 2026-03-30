@@ -3,6 +3,7 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 const mongoose = require('mongoose');
+require('./config/redis'); // Initialize Redis
 
 const responseRoutes = require('./routes/response.routes');
 

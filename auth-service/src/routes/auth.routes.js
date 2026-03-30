@@ -5,23 +5,66 @@ const authMiddleware = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
+const { setCache, getCache, deleteCache } = require("../config/redis");
 
 router.post("/signup", signup);
 router.post("/login", login);
 
-router.get("/me", authMiddleware, (req, res) => {
-  res.json({
-    message: "Protected route",
-    user: req.user,
-  });
+router.get("/me", authMiddleware, async (req, res) => {
+  try {
+    const cacheKey = `user:profile:${req.user.id}`;
+    
+    // Check cache first
+    const cachedUser = await getCache(cacheKey);
+    if (cachedUser) {
+      console.log(`✅ User profile cache hit for ${req.user.id}`);
+      return res.json({
+        message: "Protected route",
+        user: cachedUser,
+      });
+    }
+
+    // If not in cache, fetch from DB and cache it
+    const userData = req.user;
+    await setCache(cacheKey, userData, 3600); // Cache for 1 hour
+    console.log(`✅ User profile cached for ${req.user.id}`);
+
+    res.json({
+      message: "Protected route",
+      user: userData,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Verify token contents
-router.get("/verify-token", authMiddleware, (req, res) => {
-  res.json({
-    message: "Token verified",
-    tokenContents: req.user,
-  });
+router.get("/verify-token", authMiddleware, async (req, res) => {
+  try {
+    const cacheKey = `user:token:${req.user.id}`;
+    
+    // Check cache first
+    const cachedToken = await getCache(cacheKey);
+    if (cachedToken) {
+      console.log(`✅ Token verification cache hit for ${req.user.id}`);
+      return res.json({
+        message: "Token verified",
+        tokenContents: cachedToken,
+      });
+    }
+
+    // If not in cache, cache it
+    const tokenData = req.user;
+    await setCache(cacheKey, tokenData, 3600); // Cache for 1 hour
+    console.log(`✅ Token verification cached for ${req.user.id}`);
+
+    res.json({
+      message: "Token verified",
+      tokenContents: tokenData,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Update user role (for testing)
@@ -43,6 +86,11 @@ router.post("/update-role/:email/:newRole", async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+
+    // Clear cache for this user
+    await deleteCache(`user:profile:${user._id}`);
+    await deleteCache(`user:token:${user._id}`);
+    console.log(`✅ User cache cleared for ${email}`);
 
     res.json({
       message: "User role updated",

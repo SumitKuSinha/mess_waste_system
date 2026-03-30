@@ -1,0 +1,267 @@
+================================================================================
+LOAD BALANCER TESTING - SIMPLE COMMANDS
+================================================================================
+
+BEFORE YOU START:
+- Make sure MongoDB is running
+- Make sure Redis is running  
+- Make sure Nginx is running (already running from earlier)
+
+================================================================================
+TEST 1: START ALL SERVICES (18 instances)
+================================================================================
+
+Open PowerShell in: C:\VIT\CAT1\web dev\smart-mess-system_2
+
+Then run this command:
+
+.\start-all-services.ps1
+
+WAIT 30-45 SECONDS for all 18 PowerShell windows to open and services to start.
+
+Expected: You'll see 18 new windows opening with startup logs
+Look for: "✅ MongoDB connected" and "✅ Redis Connected Successfully"
+
+================================================================================
+TEST 2: VERIFY ALL SERVICES ARE RUNNING
+================================================================================
+
+Open a NEW PowerShell window and run:
+
+tasklist | findstr node
+
+Expected Output: You should see 18 lines with node.exe (one for each service)
+
+================================================================================
+TEST 3: TEST NGINX LOAD BALANCER
+================================================================================
+
+Run this command:
+
+curl http://localhost:8080/health
+
+Expected Response: 
+{"status":"Load balancer is running"}
+
+================================================================================
+TEST 4: TEST GATEWAY DIRECTLY
+================================================================================
+
+Run this command:
+
+curl http://localhost:5000/health
+
+Expected Response:
+{"status":"Gateway is running","port":5000}
+
+================================================================================
+TEST 5: TEST ALL 3 GATEWAY INSTANCES
+================================================================================
+
+Run these commands one by one:
+
+curl http://localhost:5000/health
+curl http://localhost:5010/health
+curl http://localhost:5020/health
+
+Expected: All three respond successfully
+
+================================================================================
+TEST 6: TEST LOAD BALANCING - AUTH SERVICE (WATCH LOGS)
+================================================================================
+
+Run this command:
+
+for ($i = 1; $i -le 9; $i++) { Write-Host "Request $i:" -ForegroundColor Cyan; curl http://localhost:8080/api/auth/health; Start-Sleep -Milliseconds 500 }
+
+WHAT TO WATCH:
+- Look at the GATEWAY window logs
+- You should see requests going to:
+  Request 1 -> Gateway 5000 -> Auth 5001
+  Request 2 -> Gateway 5010 -> Auth 5011
+  Request 3 -> Gateway 5020 -> Auth 5021
+  Request 4 -> Gateway 5000 -> Auth 5001 (cycle repeats)
+  And so on...
+
+This proves LOAD BALANCING IS WORKING!
+
+================================================================================
+TEST 7: TEST LOAD BALANCING - MENU SERVICE
+================================================================================
+
+Run this command:
+
+for ($i = 1; $i -le 9; $i++) { Write-Host "Request $i:" -ForegroundColor Green; curl http://localhost:8080/api/menu/health; Start-Sleep -Milliseconds 500 }
+
+Expected: Same round-robin pattern with Menu service (5002, 5012, 5022)
+
+================================================================================
+TEST 8: TEST LOAD BALANCING - RESPONSE SERVICE
+================================================================================
+
+Run this command:
+
+for ($i = 1; $i -le 9; $i++) { Write-Host "Request $i:" -ForegroundColor Yellow; curl http://localhost:8080/api/response/health; Start-Sleep -Milliseconds 500 }
+
+================================================================================
+TEST 9: TEST LOAD BALANCING - CALCULATION SERVICE
+================================================================================
+
+Run this command:
+
+for ($i = 1; $i -le 9; $i++) { Write-Host "Request $i:" -ForegroundColor Magenta; curl http://localhost:8080/api/calculate/health; Start-Sleep -Milliseconds 500 }
+
+================================================================================
+TEST 10: TEST DIRECT SERVICE ACCESS
+================================================================================
+
+Test Auth Service Directly (all 3 instances):
+
+curl http://localhost:5001/api/auth/health
+curl http://localhost:5011/api/auth/health
+curl http://localhost:5021/api/auth/health
+
+Test Menu Service Directly (all 3 instances):
+
+curl http://localhost:5002/api/menu/health
+curl http://localhost:5012/api/menu/health
+curl http://localhost:5022/api/menu/health
+
+Test Response Service Directly (all 3 instances):
+
+curl http://localhost:5003/api/response/health
+curl http://localhost:5013/api/response/health
+curl http://localhost:5023/api/response/health
+
+Test Calculation Service Directly (all 3 instances):
+
+curl http://localhost:5004/api/calculate/health
+curl http://localhost:5014/api/calculate/health
+curl http://localhost:5024/api/calculate/health
+
+Expected: All 12 endpoints respond successfully
+
+================================================================================
+TEST 11: TEST FAILOVER (HIGH AVAILABILITY)
+================================================================================
+
+STEP 1: Find one of the Auth service windows (Auth-1 on port 5001)
+STEP 2: Press Ctrl+C to stop it (kill that instance)
+STEP 3: The window shows "[Stopped]" or similar
+
+STEP 4: Run this command (while Auth-1 is down):
+
+for ($i = 1; $i -le 6; $i++) { Write-Host "Request $i (Auth-1 DOWN):" -ForegroundColor Red; curl http://localhost:8080/api/auth/health; Start-Sleep -Milliseconds 500 }
+
+EXPECTED: All 6 requests STILL WORK!
+Requests go to: 5011 and 5021 only (skipping the dead 5001)
+
+This proves FAILOVER IS WORKING!
+
+STEP 5: Restart the service by typing in that same window:
+
+$env:PORT=5001; npm start
+
+Wait 10-15 seconds for it to restart
+
+STEP 6: Run requests again:
+
+for ($i = 1; $i -le 9; $i++) { Write-Host "Request $i (Auth-1 RESTARTED):" -ForegroundColor Cyan; curl http://localhost:8080/api/auth/health; Start-Sleep -Milliseconds 500 }
+
+EXPECTED: Now requests cycle through all 3 ports again (5001, 5011, 5021)
+
+This proves SERVICE REJOIN IS WORKING!
+
+================================================================================
+TEST 12: CONCURRENT LOAD TEST
+================================================================================
+
+Run this command to send 30 requests as fast as possible:
+
+1..30 | ForEach-Object -Parallel { curl http://localhost:8080/api/auth/health 2>$null | Select-Object -First 1 } -ThrottleLimit 10
+
+Expected: All 30 requests succeed without any errors
+
+================================================================================
+TEST 13: COMPREHENSIVE TEST (ALL SERVICES)
+================================================================================
+
+Run all services together:
+
+1..3 | ForEach-Object { Write-Host "Auth Request $_" -ForegroundColor Blue; curl http://localhost:8080/api/auth/health; Start-Sleep -Milliseconds 300 }
+1..3 | ForEach-Object { Write-Host "Menu Request $_" -ForegroundColor Green; curl http://localhost:8080/api/menu/health; Start-Sleep -Milliseconds 300 }
+1..3 | ForEach-Object { Write-Host "Response Request $_" -ForegroundColor Cyan; curl http://localhost:8080/api/response/health; Start-Sleep -Milliseconds 300 }
+1..3 | ForEach-Object { Write-Host "Calc Request $_" -ForegroundColor Yellow; curl http://localhost:8080/api/calculate/health; Start-Sleep -Milliseconds 300 }
+
+Expected: All 12 requests succeed
+
+================================================================================
+TEST 14: STOP ALL SERVICES
+================================================================================
+
+When you're done testing, run:
+
+.\stop-all-services.ps1
+
+Expected: All 18 node processes terminate quietly
+All PowerShell windows close
+
+================================================================================
+QUICK 5-MINUTE TEST (RUN THESE IN ORDER)
+================================================================================
+
+1. .\start-all-services.ps1
+   (Wait 45 seconds)
+
+2. tasklist | findstr node
+   (Should show 18 processes)
+
+3. curl http://localhost:8080/health
+   (Should return: {"status":"Load balancer is running"})
+
+4. for ($i = 1; $i -le 9; $i++) { curl http://localhost:8080/api/auth/health; Start-Sleep -Milliseconds 500 }
+   (Watch Gateway logs - should see round-robin)
+
+5. .\stop-all-services.ps1
+   (Stop everything)
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Port Already in Use:
+
+Get-NetTCPConnection -LocalPort 5001 | Select OwningProcess
+Get-Process -Id [PID-FROM-ABOVE]
+Stop-Process -Id [PID] -Force
+
+MongoDB Not Running:
+Get-Service MongoDB
+(If it says "Stopped", start it)
+
+Redis Not Running:
+tasklist | findstr redis
+(If not there, start Redis server)
+
+Nginx Not Responding:
+cd C:\nginx-1.28.3
+.\nginx.exe -s reload
+
+================================================================================
+SUCCESS CHECKLIST
+================================================================================
+
+After all tests, verify:
+
+[ ] 18 services started successfully
+[ ] tasklist shows 18 node processes
+[ ] Nginx responds (port 8080/health)
+[ ] All 3 Gateways respond (5000, 5010, 5020/health)
+[ ] Load balancing works (requests cycle through ports)
+[ ] Failover works (requests succeed when 1 instance down)
+[ ] Service restarts and rejoins (requests include that port again)
+[ ] All services stop cleanly
+
+If all checkmarks are YES, then your LOAD BALANCER IS WORKING PERFECTLY!
+
+================================================================================

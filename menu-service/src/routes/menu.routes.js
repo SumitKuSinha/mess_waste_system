@@ -3,6 +3,7 @@ const router = express.Router();
 const Menu = require("../models/menu.model");
 const authMiddleware = require("../middleware/auth");
 const roleMiddleware = require("../middleware/role");
+const { setCache, getCache, deleteCache } = require("../config/redis");
 
 // add menu (admin only)
 router.post("/add", authMiddleware, roleMiddleware("admin"), async (req, res) => {
@@ -25,6 +26,9 @@ router.post("/add", authMiddleware, roleMiddleware("admin"), async (req, res) =>
 
     const menu = await Menu.create({ date, items });
 
+    // Clear cache for this date
+    await deleteCache(`menu:${date}`);
+
     res.status(201).json({ message: "Menu added", menu });
   } catch (error) {
     console.error("Error adding menu:", error.message);
@@ -35,19 +39,35 @@ router.post("/add", authMiddleware, roleMiddleware("admin"), async (req, res) =>
 // get menu by date (public)
 router.get("/:date", async (req, res) => {
   try {
+    const cacheKey = `menu:${req.params.date}`;
+    
+    // Check Redis cache first
+    const cachedMenu = await getCache(cacheKey);
+    if (cachedMenu) {
+      console.log(`✅ Menu cache hit for ${req.params.date}`);
+      return res.json(cachedMenu);
+    }
+
+    // If not in cache, fetch from database
     const menu = await Menu.findOne({ date: req.params.date });
 
     if (!menu) {
       return res.status(404).json({ message: "Menu not found for this date" });
     }
 
-    // Return data in the same format frontend sends (breakfast, lunch, dinner at top level)
-    res.json({
+    // Format response
+    const menuData = {
       date: menu.date,
       breakfast: menu.items.breakfast || [],
       lunch: menu.items.lunch || [],
       dinner: menu.items.dinner || []
-    });
+    };
+
+    // Store in cache for 24 hours (86400 seconds)
+    await setCache(cacheKey, menuData, 86400);
+    console.log(`✅ Menu cached for ${req.params.date}`);
+
+    res.json(menuData);
   } catch (error) {
     console.error("Error fetching menu:", error.message);
     res.status(500).json({ error: error.message });
@@ -57,11 +77,38 @@ router.get("/:date", async (req, res) => {
 // get menu by date (public) - /get/:date variant
 router.get("/get/:date", async (req, res) => {
   try {
+    const cacheKey = `menu:${req.params.date}`;
+    
+    // Check Redis cache first
+    const cachedMenu = await getCache(cacheKey);
+    if (cachedMenu) {
+      console.log(`✅ Menu cache hit for ${req.params.date}`);
+      return res.json({
+        date: cachedMenu.date,
+        items: {
+          breakfast: cachedMenu.breakfast,
+          lunch: cachedMenu.lunch,
+          dinner: cachedMenu.dinner
+        }
+      });
+    }
+
+    // If not in cache, fetch from database
     const menu = await Menu.findOne({ date: req.params.date });
 
     if (!menu) {
       return res.status(404).json({ message: "Menu not found for this date" });
     }
+
+    // Store in cache for 24 hours
+    const menuData = {
+      date: menu.date,
+      breakfast: menu.items.breakfast || [],
+      lunch: menu.items.lunch || [],
+      dinner: menu.items.dinner || []
+    };
+    await setCache(cacheKey, menuData, 86400);
+    console.log(`✅ Menu cached for ${req.params.date}`);
 
     res.json({
       date: menu.date,
@@ -102,6 +149,10 @@ router.put("/update", authMiddleware, roleMiddleware("admin"), async (req, res) 
       return res.status(404).json({ message: "Menu not found for this date" });
     }
 
+    // Clear cache for this date
+    await deleteCache(`menu:${date}`);
+    console.log(`✅ Menu cache cleared for ${date}`);
+
     res.status(200).json({ message: "Menu updated", menu: updatedMenu });
   } catch (error) {
     console.error("Error updating menu:", error.message);
@@ -123,6 +174,10 @@ router.delete("/delete", authMiddleware, roleMiddleware("admin"), async (req, re
     if (!deletedMenu) {
       return res.status(404).json({ message: "Menu not found for this date" });
     }
+
+    // Clear cache for this date
+    await deleteCache(`menu:${date}`);
+    console.log(`✅ Menu cache cleared for ${date}`);
 
     res.status(200).json({ message: "Menu deleted successfully", menu: deletedMenu });
   } catch (error) {

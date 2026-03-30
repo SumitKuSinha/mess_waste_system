@@ -9,8 +9,11 @@ function LandingPage() {
       <nav className="navbar">
         <div className="navbar-container">
           <div className="logo">
-            <span className="logo-icon">🍽️</span>
-            <span className="logo-text">SmartMess</span>
+            <img src="/clean-plate-logo.svg" alt="cleanPlate" className="logo-icon" />
+            <span className="brand-name" aria-label="CleanPlate brand">
+              <span className="brand-clean">Clean</span>
+              <span className="brand-plate">Plate</span>
+            </span>
           </div>
           <ul className="nav-menu">
             <li><a href="#features">Features</a></li>
@@ -22,7 +25,8 @@ function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="hero">
+      <section className="hero" style={{backgroundImage: 'url(https://images.pexels.com/photos/20408444/pexels-photo-20408444.jpeg)'}}>
+        <div className="hero-overlay"></div>
         <div className="hero-content">
           <h1 className="hero-title">
             Optimize Your <span className="highlight">Mess</span> Management
@@ -39,12 +43,6 @@ function LandingPage() {
             </a>
           </div>
         </div>
-        <div className="hero-graphic">
-          <div className="graphic-item item-1">📊</div>
-          <div className="graphic-item item-2">🍜</div>
-          <div className="graphic-item item-3">♻️</div>
-          <div className="graphic-item item-4">📈</div>
-        </div>
       </section>
 
       {/* Features Section */}
@@ -53,6 +51,7 @@ function LandingPage() {
         <div className="features-grid">
           {/* Student Features */}
           <div className="feature-card">
+            <img src="/feature-1.png" alt="Student Portal" className="card-image" />
             <div className="feature-icon">👤</div>
             <h3>Student Portal</h3>
             <ul className="feature-list">
@@ -65,6 +64,7 @@ function LandingPage() {
 
           {/* Admin Features */}
           <div className="feature-card">
+            <img src="/feature-2.png" alt="Admin Dashboard" className="card-image" />
             <div className="feature-icon">👨‍💼</div>
             <h3>Admin Dashboard</h3>
             <ul className="feature-list">
@@ -77,6 +77,7 @@ function LandingPage() {
 
           {/* Staff Features */}
           <div className="feature-card">
+            <img src="/feature-3.png" alt="Staff Management" className="card-image" />
             <div className="feature-icon">👷</div>
             <h3>Staff Management</h3>
             <ul className="feature-list">
@@ -89,6 +90,7 @@ function LandingPage() {
 
           {/* Smart Calculation */}
           <div className="feature-card">
+            <img src="/feature-4.png" alt="Smart Calculation" className="card-image" />
             <div className="feature-icon">🧮</div>
             <h3>Smart Calculation</h3>
             <ul className="feature-list">
@@ -187,7 +189,7 @@ function LandingPage() {
       <footer className="footer">
         <div className="footer-content">
           <div className="footer-section">
-            <h4>SmartMess</h4>
+            <h4>cleanPlate</h4>
             <p>Intelligent mess management system</p>
           </div>
           <div className="footer-section">
@@ -208,7 +210,7 @@ function LandingPage() {
           </div>
         </div>
         <div className="footer-bottom">
-          <p>&copy; 2026 SmartMess. All rights reserved.</p>
+          <p>&copy; 2026 cleanPlate. All rights reserved.</p>
         </div>
       </footer>
     </div>

@@ -1,9 +1,17 @@
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const cors = require('cors');
+const LoadBalancer = require('./load-balancer');
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
+
+// ===== INITIALIZE LOAD BALANCERS =====
+// Each service has 3 instances on ports: X000, X010, X020
+const authLB = new LoadBalancer('Auth-Service', [5001, 5011, 5021]);
+const menuLB = new LoadBalancer('Menu-Service', [5002, 5012, 5022]);
+const responseLB = new LoadBalancer('Response-Service', [5003, 5013, 5023]);
+const calcLB = new LoadBalancer('Calculation-Service', [5004, 5014, 5024]);
 
 // CORS - Allow all requests
 app.use(cors());
@@ -19,77 +27,75 @@ app.get('/health', (req, res) => {
   res.json({ status: 'Gateway is running', port: PORT });
 });
 
-// ===== SERVICE PROXIES =====
+// ===== SERVICE PROXIES WITH LOAD BALANCING =====
 
-// AUTH SERVICE (port 5001)
+// AUTH SERVICE - Load Balanced across 3 instances
 app.use('/api/auth', createProxyMiddleware({
-  target: 'http://localhost:5001',
+  target: authLB.getNextServer(),
   changeOrigin: true,
   pathRewrite: {
     '^': '/api/auth'
-  }
+  },
+  router: (req) => authLB.getNextServer()
 }));
 
-// MENU SERVICE (port 5002)
+// MENU SERVICE - Load Balanced across 3 instances
 app.use('/api/menu', createProxyMiddleware({
-  target: 'http://localhost:5002',
+  target: menuLB.getNextServer(),
   changeOrigin: true,
   pathRewrite: {
     '^': '/api/menu'
-  }
+  },
+  router: (req) => menuLB.getNextServer()
 }));
 
-// RESPONSE SERVICE (port 5003)
+// RESPONSE SERVICE - Load Balanced across 3 instances
 app.use('/api/response', createProxyMiddleware({
-  target: 'http://localhost:5003',
+  target: responseLB.getNextServer(),
   changeOrigin: true,
   pathRewrite: {
     '^': '/api/response'
-  }
+  },
+  router: (req) => responseLB.getNextServer()
 }));
 
-// CALCULATION SERVICE (port 5004)
+// CALCULATION SERVICE - Load Balanced across 3 instances
 app.use('/api/calculate', createProxyMiddleware({
-  target: 'http://localhost:5004',
+  target: calcLB.getNextServer(),
   changeOrigin: true,
   pathRewrite: {
     '^': '/api/calculate'
-  }
+  },
+  router: (req) => calcLB.getNextServer()
 }));
 
 app.use('/api/dashboard', createProxyMiddleware({
-  target: 'http://localhost:5004',
+  target: calcLB.getNextServer(),
   changeOrigin: true,
   pathRewrite: {
     '^': '/api/dashboard'
-  }
+  },
+  router: (req) => calcLB.getNextServer()
 }));
 
-// WASTE SERVICE (port 5004)
+// WASTE SERVICE - Load Balanced (calculation-service)
 app.use('/api/waste', createProxyMiddleware({
-  target: 'http://localhost:5004',
+  target: calcLB.getNextServer(),
   changeOrigin: true,
   pathRewrite: {
     '^': '/api/waste'
-  }
+  },
+  router: (req) => calcLB.getNextServer()
 }));
 
-// STAFF SERVICE (port 5005)
-app.use('/api/staff', createProxyMiddleware({
-  target: 'http://localhost:5005',
+// RECIPE SERVICE - Load Balanced (calculation-service)
+app.use('/api/recipe', createProxyMiddleware({
+  target: calcLB.getNextServer(),
   changeOrigin: true,
   pathRewrite: {
-    '^': '/api/staff'
-  }
-}));
-
-// NOTIFICATION SERVICE (port 5006)
-app.use('/api/notification', createProxyMiddleware({
-  target: 'http://localhost:5006',
-  changeOrigin: true,
-  pathRewrite: {
-    '^': '/api/notification'
-  }
+    '^': '/api/recipe'
+  },
+  router: (req) => calcLB.getNextServer()
 }));
 
 // 404 handler
@@ -110,14 +116,17 @@ app.listen(PORT, () => {
 🚀 API GATEWAY RUNNING ON PORT ${PORT}
 🚀 ===================================
 
-📍 Routes:
-  ✅ /api/auth        → localhost:5001
-  ✅ /api/menu        → localhost:5002
-  ✅ /api/response    → localhost:5003
-  ✅ /api/calculate   → localhost:5004
-  ✅ /api/dashboard   → localhost:5004
-  ✅ /api/staff       → localhost:5005
-  ✅ /api/notification→ localhost:5006
+📍 LOAD BALANCED ROUTES:
+  ✅ /api/auth        → 5001, 5011, 5021 (3 instances)
+  ✅ /api/menu        → 5002, 5012, 5022 (3 instances)
+  ✅ /api/response    → 5003, 5013, 5023 (3 instances)
+  ✅ /api/calculate   → 5004, 5014, 5024 (3 instances)
+  ✅ /api/dashboard   → 5004, 5014, 5024 (3 instances)
+  ✅ /api/waste       → 5004, 5014, 5024 (3 instances)
+  ✅ /api/recipe      → 5004, 5014, 5024 (3 instances)
+
+⚙️  Load Balancing Algorithm: Round-Robin
+🔄 Each request cycles to the next instance
 
 🔗 Access all services via: http://localhost:${PORT}/api/[service]/...
   `);

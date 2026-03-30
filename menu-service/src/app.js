@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
+require('./config/redis'); // Initialize Redis
 
 const menuRoutes = require('./routes/menu.routes');
 

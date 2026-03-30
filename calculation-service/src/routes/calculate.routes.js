@@ -4,6 +4,7 @@ const authMiddleware = require('../middleware/auth');
 const roleMiddleware = require('../middleware/role');
 const Calculation = require('../models/calculation.model');
 const { runCalculation } = require('../services/calculation.service');
+const { setCache, getCache, deleteCache } = require('../config/redis');
 require('dotenv').config();
 
 const router = express.Router();
@@ -26,28 +27,47 @@ function convertMapsToObjects(ingredients) {
 // GET /api/calculate/history - Get all saved calculations (admin only) - FIRST!
 router.get('/history', authMiddleware, roleMiddleware('admin'), async (req, res) => {
   try {
+    const cacheKey = 'calculation:history';
+    
+    // Check cache first
+    const cachedHistory = await getCache(cacheKey);
+    if (cachedHistory) {
+      console.log(`✅ Calculation history cache hit`);
+      return res.status(200).json({
+        message: 'History retrieved',
+        totalRecords: cachedHistory.length,
+        data: cachedHistory
+      });
+    }
+
     // Get all calculations from database
     const calculations = await Calculation.find().sort({ date: -1 });
+
+    const historyData = calculations.map(calc => {
+      const convertedIngredients = convertMapsToObjects(calc.ingredients);
+      return {
+        date: calc.date,
+        totalResponses: calc.totalResponses,
+        mealCounts: {
+          breakfast: calc.breakfast,
+          lunch: calc.lunch,
+          dinner: calc.dinner
+        },
+        breakfast: convertedIngredients.breakfast,
+        lunch: convertedIngredients.lunch,
+        dinner: convertedIngredients.dinner,
+        savedAt: calc.updatedAt
+      };
+    });
+
+    // Cache for 24 hours since history doesn't change often
+    await setCache(cacheKey, historyData, 86400);
+    console.log(`✅ Calculation history cached`);
 
     res.status(200).json({
       message: 'History retrieved',
       totalRecords: calculations.length,
-      data: calculations.map(calc => {
-        const convertedIngredients = convertMapsToObjects(calc.ingredients);
-        return {
-          date: calc.date,
-          totalResponses: calc.totalResponses,
-          mealCounts: {
-            breakfast: calc.breakfast,
-            lunch: calc.lunch,
-            dinner: calc.dinner
-          },
-          breakfast: convertedIngredients.breakfast,
-          lunch: convertedIngredients.lunch,
-          dinner: convertedIngredients.dinner,
-          savedAt: calc.updatedAt
-        };
-      })
+      data: historyData
     });
 
   } catch (error) {
@@ -60,6 +80,17 @@ router.get('/history', authMiddleware, roleMiddleware('admin'), async (req, res)
 router.get('/:date', authMiddleware, roleMiddleware('admin', 'staff'), async (req, res) => {
   try {
     const { date } = req.params;
+    const cacheKey = `calculation:${date}`;
+
+    // Check cache first
+    const cachedCalc = await getCache(cacheKey);
+    if (cachedCalc) {
+      console.log(`✅ Calculation cache hit for ${date}`);
+      return res.status(200).json({
+        message: 'Calculation retrieved',
+        data: cachedCalc
+      });
+    }
 
     // First check if calculation exists in database
     const existingCalc = await Calculation.findOne({ date });
@@ -68,21 +99,27 @@ router.get('/:date', authMiddleware, roleMiddleware('admin', 'staff'), async (re
       // Return stored calculation with converted data
       const convertedIngredients = convertMapsToObjects(existingCalc.ingredients);
       
+      const calcData = {
+        date: existingCalc.date,
+        totalResponses: existingCalc.totalResponses,
+        mealCounts: {
+          breakfast: existingCalc.breakfast,
+          lunch: existingCalc.lunch,
+          dinner: existingCalc.dinner
+        },
+        breakfast: convertedIngredients.breakfast,
+        lunch: convertedIngredients.lunch,
+        dinner: convertedIngredients.dinner,
+        savedAt: existingCalc.updatedAt
+      };
+
+      // Cache for 24 hours
+      await setCache(cacheKey, calcData, 86400);
+      console.log(`✅ Calculation cached for ${date}`);
+      
       return res.status(200).json({
         message: 'Calculation retrieved',
-        data: {
-          date: existingCalc.date,
-          totalResponses: existingCalc.totalResponses,
-          mealCounts: {
-            breakfast: existingCalc.breakfast,
-            lunch: existingCalc.lunch,
-            dinner: existingCalc.dinner
-          },
-          breakfast: convertedIngredients.breakfast,
-          lunch: convertedIngredients.lunch,
-          dinner: convertedIngredients.dinner,
-          savedAt: existingCalc.updatedAt
-        }
+        data: calcData
       });
     }
 
@@ -96,17 +133,28 @@ router.get('/:date', authMiddleware, roleMiddleware('admin', 'staff'), async (re
     // Convert the returned data
     const convertedIngredients = convertMapsToObjects(result.data.ingredients);
 
+    const calcData = {
+      date: result.data.date,
+      totalResponses: result.data.totalResponses,
+      mealCounts: result.data.mealCounts,
+      breakfast: convertedIngredients.breakfast,
+      lunch: convertedIngredients.lunch,
+      dinner: convertedIngredients.dinner,
+      savedAt: result.data.savedAt
+    };
+
+    // Cache for 24 hours
+    await setCache(cacheKey, calcData, 86400);
+    console.log(`✅ Calculation cached for ${date}`);
+// Clear cache for this calculation and history
+    await deleteCache(`calculation:${date}`);
+    await deleteCache('calculation:history');
+    console.log(`✅ Calculation cache cleared for ${date}`);
+
+    
     res.status(200).json({
       message: result.message,
-      data: {
-        date: result.data.date,
-        totalResponses: result.data.totalResponses,
-        mealCounts: result.data.mealCounts,
-        breakfast: convertedIngredients.breakfast,
-        lunch: convertedIngredients.lunch,
-        dinner: convertedIngredients.dinner,
-        savedAt: result.data.savedAt
-      }
+      data: calcData
     });
 
   } catch (error) {
