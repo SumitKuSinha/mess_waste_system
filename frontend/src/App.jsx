@@ -6,6 +6,7 @@ import SignupPage from './pages/SignupPage';
 import AdminPanel from './pages/AdminPanel';
 import StudentDashboard from './pages/StudentDashboard';
 import StaffDashboard from './pages/StaffDashboard';
+import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
 function App() {
@@ -15,9 +16,10 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        <Route path="/admin-panel" element={<AdminPanel />} />
-        <Route path="/student-dashboard" element={<StudentDashboard />} />
-        <Route path="/staff-dashboard" element={<StaffDashboard />} />
+        {/* Protected Routes - Require authentication and specific role */}
+        <Route path="/admin-panel" element={<ProtectedRoute element={<AdminPanel />} requiredRole="admin" />} />
+        <Route path="/student-dashboard" element={<ProtectedRoute element={<StudentDashboard />} requiredRole="student" />} />
+        <Route path="/staff-dashboard" element={<ProtectedRoute element={<StaffDashboard />} requiredRole="staff" />} />
       </Routes>
     </Router>
   );
