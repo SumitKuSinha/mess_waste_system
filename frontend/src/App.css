@@ -4,9 +4,10 @@
 
 :root {
   --font-sans: 'Sora', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  --primary-color: #d67229;
-  --secondary-color: #d67229;
-  --primary-dark: #d67229;
+  --primary-color: #ff8c00;
+  --secondary-color: #f08b29;
+  --primary-dark: #cc7000;
+  --primary-soft: #ff8c0020;
   --dark-bg: #1A1A1A;
   --grey-bg: #2A2A2A;
   --light-grey: #3A3A3A;
@@ -41,7 +42,10 @@ body {
   font-family: var(--font-sans);
   line-height: 1.6;
   color: var(--text-light);
-  background: radial-gradient(circle at top left, #242424 0%, var(--dark-bg) 55%, #101010 100%);
+  background:
+    radial-gradient(circle at 20% 30%, rgba(255, 140, 0, 0.15), transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(255, 140, 0, 0.1), transparent 40%),
+    #0f0f0f;
 }
 
 #root {

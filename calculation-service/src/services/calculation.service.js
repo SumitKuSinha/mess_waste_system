@@ -1,6 +1,7 @@
 const axios = require('axios');
 const Calculation = require('../models/calculation.model');
 const Recipe = require('../models/recipe.model');
+const { deleteCache } = require('../config/redis');
 
 // Wastage buffer for realistic kitchen calculations (10% extra for waste)
 const WASTAGE_PERCENT = 10;
@@ -16,10 +17,10 @@ async function runCalculation(date) {
 
     // Step 1: Get all responses from Response Service (API call)
     console.log(`[CALCULATION] 🌐 Fetching responses from localhost:5003...`);
-    const responseRes = await axios.get(`http://localhost:5003/api/response/all?date=${date}`, {
+    const responseRes = await axios.get(`http://localhost:5003/api/response/all?date=${date}&force=true`, {
       timeout: 5000
     });
-    console.log(`[CALCULATION] ✅ Got response from service: ${responseRes.status}`);
+    console.log(`[CALCULATION] [OK] Got response from service: ${responseRes.status}`);
     const responses = responseRes.data.data;
 
     if (!responses || responses.length === 0) {
@@ -52,7 +53,7 @@ async function runCalculation(date) {
     const menuRes = await axios.get(`http://localhost:5002/api/menu/get/${date}`, {
       timeout: 5000
     });
-    console.log(`[CALCULATION] ✅ Got menu from service: ${menuRes.status}`);
+    console.log(`[CALCULATION] [OK] Got menu from service: ${menuRes.status}`);
     const menu = menuRes.data;
 
     if (!menu) {
@@ -162,7 +163,11 @@ async function runCalculation(date) {
       { upsert: true, new: true }
     );
 
-    console.log(`[CALCULATION] ✅ Calculation saved for ${date}`);
+    // Ensure fresh reads after background recalculation (consumer-triggered updates).
+    await deleteCache(`calculation:${date}`);
+    await deleteCache('calculation:history');
+
+    console.log(`[CALCULATION] [OK] Calculation saved for ${date}`);
 
     return {
       success: true,
@@ -182,7 +187,7 @@ async function runCalculation(date) {
     };
 
   } catch (error) {
-    console.error(`[CALCULATION] ❌ Error calculating meals for ${date}`);
+    console.error(`[CALCULATION] [ERR] Error calculating meals for ${date}`);
     console.error(`[CALCULATION] Error type:`, error.code || error.name);
     console.error(`[CALCULATION] Error message:`, error.message);
     if (error.response) {

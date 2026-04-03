@@ -45,7 +45,7 @@ router.post('/seed', authMiddleware, roleMiddleware('admin'), async (req, res) =
     const createdRecipes = await Recipe.insertMany(DEFAULT_RECIPES);
 
     res.status(201).json({
-      message: `✅ Seeded ${createdRecipes.length} recipes successfully`,
+      message: `[OK] Seeded ${createdRecipes.length} recipes successfully`,
       count: createdRecipes.length
     });
   } catch (error) {

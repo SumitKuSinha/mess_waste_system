@@ -17,15 +17,15 @@ const redisClient = redis.createClient({
 
 // Handle Redis connection events
 redisClient.on('connect', () => {
-  console.log('✅ Redis Connected Successfully');
+  console.log('[OK] Redis Connected Successfully');
 });
 
 redisClient.on('error', (err) => {
-  console.error('❌ Redis Connection Error:', err.message);
+  console.error('[ERR] Redis Connection Error:', err.message);
 });
 
 redisClient.on('ready', () => {
-  console.log('✅ Redis is Ready');
+  console.log('[OK] Redis is Ready');
 });
 
 redisClient.on('end', () => {
@@ -34,7 +34,7 @@ redisClient.on('end', () => {
 
 // Connect to Redis
 redisClient.connect().catch((err) => {
-  console.error('❌ Failed to connect to Redis:', err.message);
+  console.error('[ERR] Failed to connect to Redis:', err.message);
 });
 
 // Utility function to set cache with expiration (TTL in seconds)

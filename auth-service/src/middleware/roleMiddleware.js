@@ -12,7 +12,7 @@ const roleMiddleware = (...allowedRoles) => {
       });
     }
 
-    console.log(`✅ Role check passed for ${userRole}`);
+    console.log(`[OK] Role check passed for ${userRole}`);
     next();
   };
 };

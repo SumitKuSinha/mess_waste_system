@@ -9,15 +9,15 @@ async function connectQueue() {
 
     await channel.assertQueue('meal_queue');
 
-    console.log('✅ RabbitMQ connected (response-service)');
+    console.log('[OK] RabbitMQ connected (response-service)');
   } catch (error) {
-    console.error('❌ RabbitMQ error:', error);
+    console.error('[ERR] RabbitMQ error:', error);
   }
 }
 
 function sendToQueue(data) {
   if (!channel) {
-    console.error('❌ Channel not ready - cannot send message');
+    console.error('[ERR] Channel not ready - cannot send message');
     return false;
   }
 
@@ -28,11 +28,11 @@ function sendToQueue(data) {
       console.log('📤 Message sent successfully:', data);
       return true;
     } else {
-      console.error('❌ Failed to send message - queue buffer full');
+      console.error('[ERR] Failed to send message - queue buffer full');
       return false;
     }
   } catch (error) {
-    console.error('❌ Error sending message:', error.message);
+    console.error('[ERR] Error sending message:', error.message);
     return false;
   }
 }

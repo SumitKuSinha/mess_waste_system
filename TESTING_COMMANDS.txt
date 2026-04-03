@@ -20,7 +20,7 @@ Then run this command:
 WAIT 30-45 SECONDS for all 18 PowerShell windows to open and services to start.
 
 Expected: You'll see 18 new windows opening with startup logs
-Look for: "✅ MongoDB connected" and "✅ Redis Connected Successfully"
+Look for: "[OK] MongoDB connected" and "[OK] Redis Connected Successfully"
 
 ================================================================================
 TEST 2: VERIFY ALL SERVICES ARE RUNNING

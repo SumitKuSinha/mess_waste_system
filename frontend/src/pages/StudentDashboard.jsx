@@ -52,15 +52,15 @@ function StudentDashboard() {
       if (response.ok) {
         const data = await response.json();
         setMenu(data);
-        setMessage('✓ Menu loaded');
+        setMessage('[OK] Menu loaded');
         setTimeout(() => setMessage(''), 2000);
       } else {
         setMenu(null);
-        setMessage('✗ No menu available for this date');
+        setMessage('[ERR] No menu available for this date');
       }
     } catch (error) {
       setMenu(null);
-      setMessage(`✗ Error: ${error.message}`);
+      setMessage(`[ERR] Error: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -89,7 +89,7 @@ function StudentDashboard() {
         setSubmissionMenu(data);
       } else {
         setSubmissionMenu(null);
-        setMessage('✗ No menu available for this date');
+        setMessage('[ERR] No menu available for this date');
       }
     } catch (error) {
       setSubmissionMenu(null);
@@ -133,7 +133,7 @@ function StudentDashboard() {
       });
 
       if (res.ok) {
-        setMessage('✓ Response submitted successfully');
+        setMessage('[OK] Response submitted successfully');
         setResponse({ date: '', breakfast: '', lunch: '', dinner: '' });
         // Add a small delay to ensure backend has processed
         setTimeout(() => {
@@ -142,10 +142,10 @@ function StudentDashboard() {
         setTimeout(() => setMessage(''), 3000);
       } else {
         const error = await res.json();
-        setMessage(`✗ Error: ${error.message || 'Failed to submit'}`);
+        setMessage(`[ERR] Error: ${error.message || 'Failed to submit'}`);
       }
     } catch (error) {
-      setMessage(`✗ Error: ${error.message}`);
+      setMessage(`[ERR] Error: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -186,17 +186,17 @@ function StudentDashboard() {
         
         setMyResponses(responsesArray);
         if (responsesArray.length > 0) {
-          setMessage(`✓ Loaded ${responsesArray.length} response(s)`);
+          setMessage(`[OK] Loaded ${responsesArray.length} response(s)`);
           setTimeout(() => setMessage(''), 2000);
         }
       } else {
         setMyResponses([]);
-        setMessage('✗ No responses found');
+        setMessage('[ERR] No responses found');
       }
     } catch (error) {
       console.error('Error fetching responses:', error);
       setMyResponses([]);
-      setMessage(`✗ Error: ${error.message}`);
+      setMessage(`[ERR] Error: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -238,7 +238,7 @@ function StudentDashboard() {
       });
 
       if (res.ok) {
-        setMessage('✓ Response updated successfully');
+        setMessage('[OK] Response updated successfully');
         setResponseToUpdate({ id: '', date: '', breakfast: '', lunch: '', dinner: '' });
         setTimeout(() => {
           handleGetMyResponses();
@@ -246,10 +246,10 @@ function StudentDashboard() {
         setTimeout(() => setMessage(''), 3000);
       } else {
         const error = await res.json();
-        setMessage(`✗ Error: ${error.message || 'Failed to update'}`);
+        setMessage(`[ERR] Error: ${error.message || 'Failed to update'}`);
       }
     } catch (error) {
-      setMessage(`✗ Error: ${error.message}`);
+      setMessage(`[ERR] Error: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -275,17 +275,17 @@ function StudentDashboard() {
       });
 
       if (res.ok) {
-        setMessage('✓ Response deleted successfully');
+        setMessage('[OK] Response deleted successfully');
         setTimeout(() => {
           handleGetMyResponses();
         }, 500);
         setTimeout(() => setMessage(''), 3000);
       } else {
         const error = await res.json();
-        setMessage(`✗ Error: ${error.message || 'Failed to delete'}`);
+        setMessage(`[ERR] Error: ${error.message || 'Failed to delete'}`);
       }
     } catch (error) {
-      setMessage(`✗ Error: ${error.message}`);
+      setMessage(`[ERR] Error: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -337,7 +337,7 @@ function StudentDashboard() {
       <div className="student-content">
         {/* Message */}
         {message && (
-          <div className={`message ${message.startsWith('✓') ? 'success' : 'error'}`}>
+          <div className={`message ${message.startsWith('[OK]') ? 'success' : 'error'}`}>
             {message}
           </div>
         )}

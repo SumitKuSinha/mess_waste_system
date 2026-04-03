@@ -11,20 +11,23 @@
   --danger: #EF4444;
   --warning: #F59E0B;
   min-height: 100vh;
-  background: linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 100%);
+  background:
+    radial-gradient(circle at 16% 28%, rgba(255, 140, 0, 0.08) 0%, rgba(255, 140, 0, 0) 42%),
+    radial-gradient(circle at 84% 72%, rgba(255, 140, 0, 0.05) 0%, rgba(255, 140, 0, 0) 45%),
+    linear-gradient(155deg, #16181c 0%, #131417 52%, #101114 100%);
   display: flex;
   flex-direction: column;
 }
 
 /* HEADER */
 .student-header {
-  background: #2A2A2A;
+  background: linear-gradient(145deg, #1b1d21, #15171b);
   padding: 2rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 3px solid var(--primary);
+  border-bottom: 1px solid rgba(255, 140, 0, 0.28);
 }
 
 .student-header h1 {
@@ -133,10 +136,10 @@
 
 /* TAB CONTENT */
 .tab-content {
-  background: #2A2A2A;
+  background: linear-gradient(145deg, #1a1a1a, #111111);
   border-radius: 8px;
   padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
 }
 
 .tab-content h2 {
@@ -180,7 +183,7 @@
 .meal-section {
   margin-bottom: 1.5rem;
   padding: 1.5rem;
-  background-color: var(--bg-light);
+  background: linear-gradient(145deg, #1d1d1d, #141414);
   border-radius: 6px;
   border-left: 4px solid var(--primary);
 }
@@ -277,7 +280,7 @@
 .menu-display {
   margin-top: 2rem;
   padding: 2rem;
-  background-color: var(--bg-light);
+  background: linear-gradient(145deg, #1b1b1b, #121212);
   border-radius: 8px;
   border: 1px solid var(--border);
 }
@@ -285,7 +288,7 @@
 .menu-display-info {
   margin-bottom: 2rem;
   padding: 1.5rem;
-  background-color: rgba(255, 140, 0, 0.15);
+  background: rgba(255, 140, 0, 0.1);
   border-left: 4px solid var(--primary);
   border-radius: 6px;
 }
@@ -363,7 +366,7 @@
 }
 
 .response-card {
-  background: #2A2A2A;
+  background: linear-gradient(145deg, #1b1b1b, #121212);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 1.5rem;

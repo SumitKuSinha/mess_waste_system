@@ -20,7 +20,7 @@ Microservices (3 instances each):
 
 ---
 
-## 🎯 Quick Start
+## [TARGET] Quick Start
 
 ### Option 1: Start Everything at Once
 Open PowerShell and run:
@@ -30,10 +30,10 @@ cd "C:\VIT\CAT1\web dev\smart-mess-system_2"
 ```
 
 This will:
-- ✅ Open 18 new PowerShell windows
-- ✅ Start 3 Gateway instances
-- ✅ Start 3 instances of each service (Auth, Menu, Response, Calculation)
-- ✅ All instances auto-configured with correct ports
+- [OK] Open 18 new PowerShell windows
+- [OK] Start 3 Gateway instances
+- [OK] Start 3 instances of each service (Auth, Menu, Response, Calculation)
+- [OK] All instances auto-configured with correct ports
 
 **Wait 30-45 seconds** for all services to initialize.
 
@@ -75,7 +75,7 @@ Once all services are running:
 
 ---
 
-## 📊 Service Port Mapping
+## [DATA] Service Port Mapping
 
 ### Gateway (3 instances)
 - **Instance 1**: Port 5000
@@ -112,15 +112,15 @@ Once all services are running:
 ```
 
 This will:
-- ✅ Kill all 18 Node.js service processes
-- ❌ Leave Nginx running (can be restarted separately)
+- [OK] Kill all 18 Node.js service processes
+- [ERR] Leave Nginx running (can be restarted separately)
 
 ### Option 2: Stop Individual Service
 Press `Ctrl+C` in any PowerShell window to stop that specific service.
 
 ---
 
-## ✅ Testing Load Balancing
+## [OK] Testing Load Balancing
 
 ### Test 1: Check Load Distribution
 Make multiple requests and watch the console logs to see which port handles each request:
@@ -186,7 +186,7 @@ rm auth-service/logs/*
 
 ---
 
-## 📝 How It Works
+## [NOTE] How It Works
 
 ### Layer 1: Nginx Load Balancing
 - Nginx listens on **port 8080**
@@ -237,6 +237,6 @@ If you need to:
 
 ---
 
-**Status**: ✅ Load Balancer Setup Complete!
+**Status**: [OK] Load Balancer Setup Complete!
 
 Execute `.\start-all-services.ps1` to start your entire system.

@@ -13,7 +13,7 @@ async function startConsumer() {
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
     });
-    console.log('✅ MongoDB connected');
+    console.log('[OK] MongoDB connected');
 
     const connection = await amqp.connect('amqp://localhost');
     const channel = await connection.createChannel();
@@ -41,22 +41,22 @@ async function startConsumer() {
         console.log('🔥 Result.success:', result?.success);
 
         if (result && result.success) {
-          console.log('✅ Calculation done');
-          console.log('✅ Calculation completed:', result);
+          console.log('[OK] Calculation done');
+          console.log('[OK] Calculation completed:', result);
           channel.ack(msg);
         } else {
-          console.error('❌ Calculation failed');
-          console.error('❌ Result:', result);
+          console.error('[ERR] Calculation failed');
+          console.error('[ERR] Result:', result);
           channel.ack(msg);
         }
       } catch (error) {
-        console.error('❌ Error processing message:', error.message);
-        console.error('❌ Error stack:', error.stack);
+        console.error('[ERR] Error processing message:', error.message);
+        console.error('[ERR] Error stack:', error.stack);
         channel.nack(msg, false, true); // Requeue on error
       }
     }, { noAck: false });
   } catch (error) {
-    console.error('❌ Consumer error:', error);
+    console.error('[ERR] Consumer error:', error);
     process.exit(1);
   }
 }

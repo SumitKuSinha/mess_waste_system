@@ -89,13 +89,13 @@ async function setup() {
     await mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true });
     await menuDb.asPromise();
     await responseDb.asPromise();
-    console.log('✅ All databases connected\n');
+    console.log('[OK] All databases connected\n');
 
     // 1. Seed recipes
     console.log('📚 Seeding recipes...');
     await Recipe.deleteMany({});
     const recipes = await Recipe.insertMany(RECIPES);
-    console.log(`✅ Seeded ${recipes.length} recipes`);
+    console.log(`[OK] Seeded ${recipes.length} recipes`);
     RECIPES.forEach(r => {
       const ingr = r.ingredients.map(i => `${i.item}(${i.qtyPerPerson}${i.unit})`).join(', ');
       console.log(`   - ${r.name}: ${ingr}`);
@@ -112,7 +112,7 @@ async function setup() {
         dinner: ['Khichdi', 'Noodles']
       }
     });
-    console.log('✅ Menu created:');
+    console.log('[OK] Menu created:');
     console.log(`   Breakfast: ${menu.items.breakfast.join(', ')}`);
     console.log(`   Lunch: ${menu.items.lunch.join(', ')}`);
     console.log(`   Dinner: ${menu.items.dinner.join(', ')}`);
@@ -129,7 +129,7 @@ async function setup() {
         dinner: 'half'
       }
     });
-    console.log('✅ Response created:');
+    console.log('[OK] Response created:');
     console.log(`   Student: ${response.studentId}`);
     console.log(`   Breakfast: ${response.meals.breakfast} (1 meal)`);
     console.log(`   Lunch: ${response.meals.lunch} (1 meal)`);
@@ -143,17 +143,17 @@ async function setup() {
     let allMatched = true;
     for (const item of allMenuItems) {
       const found = recipeNames.includes(item);
-      console.log(`   ${found ? '✅' : '❌'} "${item}"`);
+      console.log(`   ${found ? '[OK]' : '[ERR]'} "${item}"`);
       if (!found) allMatched = false;
     }
 
     if (allMatched) {
-      console.log('\n✅ All menu items match recipes! Ready for calculation.');
+      console.log('\n[OK] All menu items match recipes! Ready for calculation.');
     } else {
-      console.log('\n❌ Some menu items don\'t match recipe names!');
+      console.log('\n[ERR] Some menu items don\'t match recipe names!');
     }
 
-    console.log('\n📝 Next step: Call /api/calculate/2026-03-27');
+    console.log('\n[NOTE] Next step: Call /api/calculate/2026-03-27');
     console.log('   Expected: Should calculate ingredients with quantities!');
 
     await mongoose.connection.close();
@@ -161,7 +161,7 @@ async function setup() {
     await responseDb.close();
     process.exit(0);
   } catch (error) {
-    console.error('❌ Error:', error.message);
+    console.error('[ERR] Error:', error.message);
     process.exit(1);
   }
 }

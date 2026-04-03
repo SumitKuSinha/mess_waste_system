@@ -32,7 +32,12 @@ router.post("/add", authMiddleware, roleMiddleware("admin"), async (req, res) =>
     res.status(201).json({ message: "Menu added", menu });
   } catch (error) {
     console.error("Error adding menu:", error.message);
-    res.status(500).json({ error: error.message });
+    if (error.code === 11000) {
+      return res.status(409).json({
+        message: 'Menu already available for this date'
+      });
+    }
+    res.status(500).json({ message: error.message });
   }
 });
 
@@ -44,7 +49,7 @@ router.get("/:date", async (req, res) => {
     // Check Redis cache first
     const cachedMenu = await getCache(cacheKey);
     if (cachedMenu) {
-      console.log(`✅ Menu cache hit for ${req.params.date}`);
+      console.log(`[OK] Menu cache hit for ${req.params.date}`);
       return res.json(cachedMenu);
     }
 
@@ -65,7 +70,7 @@ router.get("/:date", async (req, res) => {
 
     // Store in cache for 24 hours (86400 seconds)
     await setCache(cacheKey, menuData, 86400);
-    console.log(`✅ Menu cached for ${req.params.date}`);
+    console.log(`[OK] Menu cached for ${req.params.date}`);
 
     res.json(menuData);
   } catch (error) {
@@ -82,7 +87,7 @@ router.get("/get/:date", async (req, res) => {
     // Check Redis cache first
     const cachedMenu = await getCache(cacheKey);
     if (cachedMenu) {
-      console.log(`✅ Menu cache hit for ${req.params.date}`);
+      console.log(`[OK] Menu cache hit for ${req.params.date}`);
       return res.json({
         date: cachedMenu.date,
         items: {
@@ -108,7 +113,7 @@ router.get("/get/:date", async (req, res) => {
       dinner: menu.items.dinner || []
     };
     await setCache(cacheKey, menuData, 86400);
-    console.log(`✅ Menu cached for ${req.params.date}`);
+    console.log(`[OK] Menu cached for ${req.params.date}`);
 
     res.json({
       date: menu.date,
@@ -151,7 +156,7 @@ router.put("/update", authMiddleware, roleMiddleware("admin"), async (req, res) 
 
     // Clear cache for this date
     await deleteCache(`menu:${date}`);
-    console.log(`✅ Menu cache cleared for ${date}`);
+    console.log(`[OK] Menu cache cleared for ${date}`);
 
     res.status(200).json({ message: "Menu updated", menu: updatedMenu });
   } catch (error) {
@@ -177,7 +182,7 @@ router.delete("/delete", authMiddleware, roleMiddleware("admin"), async (req, re
 
     // Clear cache for this date
     await deleteCache(`menu:${date}`);
-    console.log(`✅ Menu cache cleared for ${date}`);
+    console.log(`[OK] Menu cache cleared for ${date}`);
 
     res.status(200).json({ message: "Menu deleted successfully", menu: deletedMenu });
   } catch (error) {

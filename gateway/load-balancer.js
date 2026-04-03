@@ -8,7 +8,7 @@ class LoadBalancer {
     this.serviceName = serviceName;
     this.ports = ports; // Array of ports [5001, 5011, 5021]
     this.currentIndex = 0;
-    console.log(`✅ Load Balancer initialized for ${serviceName}: ${ports.join(', ')}`);
+    console.log(`[OK] Load Balancer initialized for ${serviceName}: ${ports.join(', ')}`);
   }
 
   /**

@@ -99,20 +99,20 @@ function SignupPage() {
       <div className="auth-container">
         <div className="auth-box signup-box">
           <div className="auth-header">
-            <h1>🍽️ Smart Mess System</h1>
+            <h1>Smart Mess System</h1>
             <p>Create your account</p>
           </div>
 
           {error && (
             <div className="error-alert">
-              <span className="error-icon">⚠️</span>
+              <span className="error-icon">!</span>
               <span>{error}</span>
             </div>
           )}
 
           {success && (
             <div className="success-alert">
-              <span className="success-icon">✓</span>
+              <span className="success-icon">OK</span>
               <span>{success}</span>
             </div>
           )}
@@ -183,7 +183,7 @@ function SignupPage() {
                   onClick={() => handleRoleChange('student')}
                   disabled={loading}
                 >
-                  <span className="role-icon">👨‍🎓</span>
+                  <span className="role-icon">STU</span>
                   <span className="role-label">Student</span>
                   <span className="role-desc">Submit meal preferences</span>
                 </button>
@@ -194,7 +194,7 @@ function SignupPage() {
                   onClick={() => handleRoleChange('admin')}
                   disabled={loading}
                 >
-                  <span className="role-icon">👨‍💼</span>
+                  <span className="role-icon">ADM</span>
                   <span className="role-label">Admin</span>
                   <span className="role-desc">Manage menu & analytics</span>
                 </button>
@@ -205,7 +205,7 @@ function SignupPage() {
                   onClick={() => handleRoleChange('staff')}
                   disabled={loading}
                 >
-                  <span className="role-icon">👨‍🍳</span>
+                  <span className="role-icon">STF</span>
                   <span className="role-label">Staff</span>
                   <span className="role-desc">Track waste & inventory</span>
                 </button>
@@ -242,9 +242,9 @@ function SignupPage() {
             <h2>Join Our Community!</h2>
             <p>Be part of the smart meal management revolution.</p>
             <div className="illustration-items">
-              <div className="item">🎯 Easy to use</div>
-              <div className="item">🔒 Secure & Private</div>
-              <div className="item">⚡ Fast Processing</div>
+              <div className="item">Easy to use</div>
+              <div className="item">Secure & Private</div>
+              <div className="item">Fast Processing</div>
             </div>
           </div>
         </div>

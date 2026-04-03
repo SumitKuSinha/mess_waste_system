@@ -17,7 +17,7 @@ router.get("/me", authMiddleware, async (req, res) => {
     // Check cache first
     const cachedUser = await getCache(cacheKey);
     if (cachedUser) {
-      console.log(`✅ User profile cache hit for ${req.user.id}`);
+      console.log(`[OK] User profile cache hit for ${req.user.id}`);
       return res.json({
         message: "Protected route",
         user: cachedUser,
@@ -27,7 +27,7 @@ router.get("/me", authMiddleware, async (req, res) => {
     // If not in cache, fetch from DB and cache it
     const userData = req.user;
     await setCache(cacheKey, userData, 3600); // Cache for 1 hour
-    console.log(`✅ User profile cached for ${req.user.id}`);
+    console.log(`[OK] User profile cached for ${req.user.id}`);
 
     res.json({
       message: "Protected route",
@@ -46,7 +46,7 @@ router.get("/verify-token", authMiddleware, async (req, res) => {
     // Check cache first
     const cachedToken = await getCache(cacheKey);
     if (cachedToken) {
-      console.log(`✅ Token verification cache hit for ${req.user.id}`);
+      console.log(`[OK] Token verification cache hit for ${req.user.id}`);
       return res.json({
         message: "Token verified",
         tokenContents: cachedToken,
@@ -56,7 +56,7 @@ router.get("/verify-token", authMiddleware, async (req, res) => {
     // If not in cache, cache it
     const tokenData = req.user;
     await setCache(cacheKey, tokenData, 3600); // Cache for 1 hour
-    console.log(`✅ Token verification cached for ${req.user.id}`);
+    console.log(`[OK] Token verification cached for ${req.user.id}`);
 
     res.json({
       message: "Token verified",
@@ -90,7 +90,7 @@ router.post("/update-role/:email/:newRole", async (req, res) => {
     // Clear cache for this user
     await deleteCache(`user:profile:${user._id}`);
     await deleteCache(`user:token:${user._id}`);
-    console.log(`✅ User cache cleared for ${email}`);
+    console.log(`[OK] User cache cleared for ${email}`);
 
     res.json({
       message: "User role updated",

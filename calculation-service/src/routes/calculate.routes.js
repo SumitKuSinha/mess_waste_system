@@ -32,7 +32,7 @@ router.get('/history', authMiddleware, roleMiddleware('admin'), async (req, res)
     // Check cache first
     const cachedHistory = await getCache(cacheKey);
     if (cachedHistory) {
-      console.log(`✅ Calculation history cache hit`);
+      console.log(`[OK] Calculation history cache hit`);
       return res.status(200).json({
         message: 'History retrieved',
         totalRecords: cachedHistory.length,
@@ -62,7 +62,7 @@ router.get('/history', authMiddleware, roleMiddleware('admin'), async (req, res)
 
     // Cache for 24 hours since history doesn't change often
     await setCache(cacheKey, historyData, 86400);
-    console.log(`✅ Calculation history cached`);
+    console.log(`[OK] Calculation history cached`);
 
     res.status(200).json({
       message: 'History retrieved',
@@ -85,7 +85,7 @@ router.get('/:date', authMiddleware, roleMiddleware('admin', 'staff'), async (re
     // Check cache first
     const cachedCalc = await getCache(cacheKey);
     if (cachedCalc) {
-      console.log(`✅ Calculation cache hit for ${date}`);
+      console.log(`[OK] Calculation cache hit for ${date}`);
       return res.status(200).json({
         message: 'Calculation retrieved',
         data: cachedCalc
@@ -115,7 +115,7 @@ router.get('/:date', authMiddleware, roleMiddleware('admin', 'staff'), async (re
 
       // Cache for 24 hours
       await setCache(cacheKey, calcData, 86400);
-      console.log(`✅ Calculation cached for ${date}`);
+      console.log(`[OK] Calculation cached for ${date}`);
       
       return res.status(200).json({
         message: 'Calculation retrieved',
@@ -145,11 +145,7 @@ router.get('/:date', authMiddleware, roleMiddleware('admin', 'staff'), async (re
 
     // Cache for 24 hours
     await setCache(cacheKey, calcData, 86400);
-    console.log(`✅ Calculation cached for ${date}`);
-// Clear cache for this calculation and history
-    await deleteCache(`calculation:${date}`);
-    await deleteCache('calculation:history');
-    console.log(`✅ Calculation cache cleared for ${date}`);
+    console.log(`[OK] Calculation cached for ${date}`);
 
     
     res.status(200).json({

@@ -23,11 +23,11 @@ async function createTestMenu() {
   try {
     console.log('🔗 Connecting to Menu Database...');
     await menuDb.asPromise();
-    console.log('✅ Menu DB connected');
+    console.log('[OK] Menu DB connected');
 
     // Delete existing menu for this date
     await Menu.deleteOne({ date: '2026-03-27' });
-    console.log('🗑️  Cleared existing menu for 2026-03-27');
+    console.log('[DELETE]  Cleared existing menu for 2026-03-27');
 
     // Create test menu
     const menu = await Menu.create({
@@ -39,13 +39,13 @@ async function createTestMenu() {
       }
     });
 
-    console.log('✅ Test menu created:', JSON.stringify(menu, null, 2));
+    console.log('[OK] Test menu created:', JSON.stringify(menu, null, 2));
     
     await menuDb.close();
-    console.log('✅ Database connection closed');
+    console.log('[OK] Database connection closed');
     process.exit(0);
   } catch (error) {
-    console.error('❌ Error:', error.message);
+    console.error('[ERR] Error:', error.message);
     process.exit(1);
   }
 }

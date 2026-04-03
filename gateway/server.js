@@ -117,13 +117,13 @@ app.listen(PORT, () => {
 🚀 ===================================
 
 📍 LOAD BALANCED ROUTES:
-  ✅ /api/auth        → 5001, 5011, 5021 (3 instances)
-  ✅ /api/menu        → 5002, 5012, 5022 (3 instances)
-  ✅ /api/response    → 5003, 5013, 5023 (3 instances)
-  ✅ /api/calculate   → 5004, 5014, 5024 (3 instances)
-  ✅ /api/dashboard   → 5004, 5014, 5024 (3 instances)
-  ✅ /api/waste       → 5004, 5014, 5024 (3 instances)
-  ✅ /api/recipe      → 5004, 5014, 5024 (3 instances)
+  [OK] /api/auth        → 5001, 5011, 5021 (3 instances)
+  [OK] /api/menu        → 5002, 5012, 5022 (3 instances)
+  [OK] /api/response    → 5003, 5013, 5023 (3 instances)
+  [OK] /api/calculate   → 5004, 5014, 5024 (3 instances)
+  [OK] /api/dashboard   → 5004, 5014, 5024 (3 instances)
+  [OK] /api/waste       → 5004, 5014, 5024 (3 instances)
+  [OK] /api/recipe      → 5004, 5014, 5024 (3 instances)
 
 ⚙️  Load Balancing Algorithm: Round-Robin
 🔄 Each request cycles to the next instance

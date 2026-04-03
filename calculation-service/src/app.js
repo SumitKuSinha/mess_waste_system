@@ -28,10 +28,10 @@ mongoose.connect(process.env.MONGO_URI, {
   useUnifiedTopology: true
 })
   .then(() => {
-    console.log('✅ MongoDB connected (Calculation DB)');
+    console.log('[OK] MongoDB connected (Calculation DB)');
   })
   .catch(err => {
-    console.error('❌ MongoDB connection error:', err);
+    console.error('[ERR] MongoDB connection error:', err);
   });
 
 // Middleware
