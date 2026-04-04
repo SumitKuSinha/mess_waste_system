@@ -11,6 +11,8 @@ const menuSchema = new mongoose.Schema({
     lunch: [String],
     dinner: [String]
   }
+}, {
+  timestamps: true
 });
 
 module.exports = mongoose.model("Menu", menuSchema);

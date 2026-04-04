@@ -10,6 +10,7 @@ function StudentDashboard() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [user, setUser] = useState(null);
+  const [notifications, setNotifications] = useState([]);
 
   // Response submission states
   const [response, setResponse] = useState({
@@ -291,9 +292,37 @@ function StudentDashboard() {
     }
   };
 
+  const handleFetchNotifications = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`http://localhost:5000/api/menu/notifications?limit=6&_t=${Date.now()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache'
+        }
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setNotifications(Array.isArray(data.notifications) ? data.notifications : []);
+      } else {
+        setNotifications([]);
+      }
+    } catch (error) {
+      // Keep dashboard usable if notifications fail.
+      setNotifications([]);
+    }
+  };
+
   // Load my responses on component mount
   useEffect(() => {
     handleGetMyResponses();
+    handleFetchNotifications();
+
+    const intervalId = setInterval(() => {
+      handleFetchNotifications();
+    }, 30000);
+
     // Load user info from localStorage
     const userData = localStorage.getItem('user');
     if (userData) {
@@ -303,6 +332,8 @@ function StudentDashboard() {
         console.error('Error parsing user data:', error);
       }
     }
+
+    return () => clearInterval(intervalId);
   }, []);
 
   // Logout handler
@@ -339,6 +370,26 @@ function StudentDashboard() {
         {message && (
           <div className={`message ${message.startsWith('[OK]') ? 'success' : 'error'}`}>
             {message}
+          </div>
+        )}
+
+        {notifications.length > 0 && (
+          <div className="student-notification-panel">
+            <div className="student-notification-header">
+              <h3>Menu Notifications</h3>
+              <button className="btn btn-secondary" onClick={handleFetchNotifications}>Refresh</button>
+            </div>
+            <div className="student-notification-list">
+              {notifications.map((item) => (
+                <div key={item._id} className="student-notification-item">
+                  <div className="student-notification-title-row">
+                    <strong>{item.title}</strong>
+                    <span>{new Date(item.createdAt).toLocaleString()}</span>
+                  </div>
+                  <p>{item.message}</p>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

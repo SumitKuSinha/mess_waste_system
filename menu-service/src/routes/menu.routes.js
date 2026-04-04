@@ -1,9 +1,65 @@
 const express = require("express");
 const router = express.Router();
 const Menu = require("../models/menu.model");
+const Notification = require("../models/notification.model");
 const authMiddleware = require("../middleware/auth");
 const roleMiddleware = require("../middleware/role");
 const { setCache, getCache, deleteCache } = require("../config/redis");
+
+const publishMenuNotification = async ({ type, title, message, menuDate, createdBy }) => {
+  try {
+    await Notification.create({
+      type,
+      title,
+      message,
+      menuDate,
+      targetRole: "student",
+      createdBy: createdBy || "admin"
+    });
+  } catch (error) {
+    console.error("[WARN] Failed to publish menu notification:", error.message);
+  }
+};
+
+// get latest notifications for students/admins
+router.get("/notifications", async (req, res) => {
+  try {
+    const limit = Math.min(Number(req.query.limit) || 8, 30);
+    const notifications = await Notification.find({ targetRole: "student" })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
+
+    // Fallback: if notification records are empty, synthesize from latest menus.
+    // This keeps student alerts working even if some older service instance handled updates.
+    if (!notifications.length) {
+      const recentMenus = await Menu.find({})
+        .sort({ _id: -1 })
+        .limit(limit)
+        .lean();
+
+      const synthesized = recentMenus.map((menu) => {
+        const createdAt = menu.updatedAt || menu.createdAt || (menu._id?.getTimestamp ? menu._id.getTimestamp() : new Date());
+        return {
+          _id: `menu-${menu._id}`,
+          type: "menu-updated",
+          title: "Menu Available",
+          message: `Menu is available for ${menu.date}. Please check the latest meals.`,
+          menuDate: menu.date,
+          targetRole: "student",
+          createdAt
+        };
+      });
+
+      return res.status(200).json({ notifications: synthesized });
+    }
+
+    res.status(200).json({ notifications });
+  } catch (error) {
+    console.error("Error fetching notifications:", error.message);
+    res.status(500).json({ message: "Failed to fetch notifications" });
+  }
+});
 
 // add menu (admin only)
 router.post("/add", authMiddleware, roleMiddleware("admin"), async (req, res) => {
@@ -28,6 +84,14 @@ router.post("/add", authMiddleware, roleMiddleware("admin"), async (req, res) =>
 
     // Clear cache for this date
     await deleteCache(`menu:${date}`);
+
+    await publishMenuNotification({
+      type: "menu-added",
+      title: "New Menu Added",
+      message: `Admin added menu for ${date}. Check the latest meals.`,
+      menuDate: date,
+      createdBy: req.user?.id
+    });
 
     res.status(201).json({ message: "Menu added", menu });
   } catch (error) {
@@ -158,6 +222,14 @@ router.put("/update", authMiddleware, roleMiddleware("admin"), async (req, res) 
     await deleteCache(`menu:${date}`);
     console.log(`[OK] Menu cache cleared for ${date}`);
 
+    await publishMenuNotification({
+      type: "menu-updated",
+      title: "Menu Updated",
+      message: `Admin updated menu for ${date}. Please review your meal options.`,
+      menuDate: date,
+      createdBy: req.user?.id
+    });
+
     res.status(200).json({ message: "Menu updated", menu: updatedMenu });
   } catch (error) {
     console.error("Error updating menu:", error.message);
@@ -183,6 +255,14 @@ router.delete("/delete", authMiddleware, roleMiddleware("admin"), async (req, re
     // Clear cache for this date
     await deleteCache(`menu:${date}`);
     console.log(`[OK] Menu cache cleared for ${date}`);
+
+    await publishMenuNotification({
+      type: "menu-deleted",
+      title: "Menu Removed",
+      message: `Admin removed menu for ${date}. You may need to recheck upcoming meals.`,
+      menuDate: date,
+      createdBy: req.user?.id
+    });
 
     res.status(200).json({ message: "Menu deleted successfully", menu: deletedMenu });
   } catch (error) {

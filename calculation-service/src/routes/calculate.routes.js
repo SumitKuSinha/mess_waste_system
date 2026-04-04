@@ -81,19 +81,22 @@ router.get('/:date', authMiddleware, roleMiddleware('admin', 'staff'), async (re
   try {
     const { date } = req.params;
     const cacheKey = `calculation:${date}`;
+    const forceRecalculate = String(req.query.force || '').toLowerCase() === 'true';
 
-    // Check cache first
-    const cachedCalc = await getCache(cacheKey);
-    if (cachedCalc) {
-      console.log(`[OK] Calculation cache hit for ${date}`);
-      return res.status(200).json({
-        message: 'Calculation retrieved',
-        data: cachedCalc
-      });
+    // Check cache first unless force=true
+    if (!forceRecalculate) {
+      const cachedCalc = await getCache(cacheKey);
+      if (cachedCalc) {
+        console.log(`[OK] Calculation cache hit for ${date}`);
+        return res.status(200).json({
+          message: 'Calculation retrieved',
+          data: cachedCalc
+        });
+      }
     }
 
-    // First check if calculation exists in database
-    const existingCalc = await Calculation.findOne({ date });
+    // First check if calculation exists in database (skip when force=true)
+    const existingCalc = forceRecalculate ? null : await Calculation.findOne({ date });
     
     if (existingCalc) {
       // Return stored calculation with converted data
@@ -123,7 +126,7 @@ router.get('/:date', authMiddleware, roleMiddleware('admin', 'staff'), async (re
       });
     }
 
-    // If not found in DB, run calculation
+    // If not found in DB or force=true, run calculation
     const result = await runCalculation(date);
 
     if (!result.success) {
@@ -169,6 +172,9 @@ router.delete('/:date', authMiddleware, roleMiddleware('admin'), async (req, res
     if (!result) {
       return res.status(404).json({ message: 'No calculation found for this date' });
     }
+
+    await deleteCache(`calculation:${date}`);
+    await deleteCache('calculation:history');
 
     res.status(200).json({ message: 'Calculation deleted successfully' });
   } catch (error) {

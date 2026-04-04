@@ -87,6 +87,105 @@ function AdminPanel() {
       .slice(0, limit);
   };
 
+  const getPercentClass = (value) => {
+    const numericValue = Number(value);
+
+    if (Number.isNaN(numericValue)) {
+      return 'low';
+    }
+
+    if (numericValue >= 20) {
+      return 'high';
+    }
+
+    if (numericValue >= 10) {
+      return 'medium';
+    }
+
+    return 'low';
+  };
+
+  const formatMass = (value) => {
+    const numericValue = Number(value);
+
+    if (!Number.isFinite(numericValue)) {
+      return '0.00 kg';
+    }
+
+    const absoluteValue = Math.abs(numericValue);
+    const sign = numericValue < 0 ? '-' : '';
+
+    if (absoluteValue === 0) {
+      return '0.00 kg';
+    }
+
+    if (absoluteValue < 1) {
+      const grams = absoluteValue * 1000;
+
+      if (grams >= 1) {
+        return `${sign}${grams.toFixed(2)} g`;
+      }
+
+      if (grams >= 0.01) {
+        return `${sign}${grams.toFixed(4)} g`;
+      }
+
+      return `${sign}${grams.toPrecision(3)} g`;
+    }
+
+    return `${numericValue.toFixed(2)} kg`;
+  };
+
+  const formatPercent = (value) => {
+    const numericValue = Number(value);
+
+    if (!Number.isFinite(numericValue)) {
+      return '0.00';
+    }
+
+    const absoluteValue = Math.abs(numericValue);
+
+    if (absoluteValue === 0) {
+      return '0.00';
+    }
+
+    if (absoluteValue < 0.0001) {
+      return numericValue.toFixed(6);
+    }
+
+    if (absoluteValue < 0.01) {
+      return numericValue.toFixed(4);
+    }
+
+    if (absoluteValue < 1) {
+      return numericValue.toFixed(2);
+    }
+
+    return numericValue.toFixed(2);
+  };
+
+  const formatMassWithFallback = (massValue, expectedValue, percentValue) => {
+    const numericMass = Number(massValue);
+    const numericExpected = Number(expectedValue);
+    const numericPercent = Number(percentValue);
+
+    if (Number.isFinite(numericMass) && numericMass > 0) {
+      return formatMass(numericMass);
+    }
+
+    if (
+      Number.isFinite(numericExpected) &&
+      Number.isFinite(numericPercent) &&
+      numericExpected > 0 &&
+      numericPercent > 0
+    ) {
+      const estimatedMass = (numericExpected * numericPercent) / 100;
+      return `~${formatMass(estimatedMass)}`;
+    }
+
+    return formatMass(numericMass);
+  };
+
   const renderBarChart = (title, entries, valueSuffix = 'kg', barClass = 'chart-bar-primary') => {
     const normalizedEntries = entries || [];
     const totalValue = Math.max(normalizedEntries.reduce((sum, [, value]) => sum + (Number(value) || 0), 0), 1);
@@ -501,8 +600,11 @@ function AdminPanel() {
     setMessage('');
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/calculate/${calculationDate}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const response = await fetch(`http://localhost:5000/api/calculate/${calculationDate}?force=true&_t=${Date.now()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache'
+        }
       });
 
       if (response.ok) {
@@ -761,6 +863,14 @@ function AdminPanel() {
     }
   };
 
+  const totalLossQuantity = Object.values(wasteData?.totalLoss || {}).reduce(
+    (sum, value) => sum + (Number(value) || 0),
+    0
+  );
+  const overallWastePercentage = Number(wasteData?.summary?.waste?.overallWastePercentage ?? 0);
+  const overallLossPercentage = Number(wasteData?.summary?.totalLoss?.overallLossPercentage ?? 0);
+  const topWastedItem = wasteData?.summary?.waste?.topWastedItem;
+
   return (
     <div className="admin-container">
       {/* Sidebar */}
@@ -873,8 +983,8 @@ function AdminPanel() {
                 <div className="stat-card">
                   <div className="stat-icon">W</div>
                   <div className="stat-info">
-                    <p className="stat-label">Total Waste (kg)</p>
-                    <p className="stat-value">{dashboardStats.totalWaste.toFixed(2)}</p>
+                    <p className="stat-label">Total Waste</p>
+                    <p className="stat-value">{formatMass(dashboardStats.totalWaste)}</p>
                   </div>
                 </div>
               </div>
@@ -1257,7 +1367,7 @@ function AdminPanel() {
                           Object.entries(calculationData.breakfast).map(([ingredient, quantity]) => (
                             <div key={ingredient} className="ingredient-item">
                               <span className="ingredient-name">{ingredient}</span>
-                              <span className="ingredient-qty">{quantity.toFixed(2)} kg</span>
+                              <span className="ingredient-qty">{formatMass(quantity)}</span>
                             </div>
                           ))
                         ) : (
@@ -1273,7 +1383,7 @@ function AdminPanel() {
                           Object.entries(calculationData.lunch).map(([ingredient, quantity]) => (
                             <div key={ingredient} className="ingredient-item">
                               <span className="ingredient-name">{ingredient}</span>
-                              <span className="ingredient-qty">{quantity.toFixed(2)} kg</span>
+                              <span className="ingredient-qty">{formatMass(quantity)}</span>
                             </div>
                           ))
                         ) : (
@@ -1289,7 +1399,7 @@ function AdminPanel() {
                           Object.entries(calculationData.dinner).map(([ingredient, quantity]) => (
                             <div key={ingredient} className="ingredient-item">
                               <span className="ingredient-name">{ingredient}</span>
-                              <span className="ingredient-qty">{quantity.toFixed(2)} kg</span>
+                              <span className="ingredient-qty">{formatMass(quantity)}</span>
                             </div>
                           ))
                         ) : (
@@ -1365,7 +1475,7 @@ function AdminPanel() {
                       </p>
                       {wasteData.totalWasteBinWeight !== undefined && wasteData.totalWasteBinWeight !== null && (
                         <p className="report-mode" style={{ fontSize: '0.9rem', color: '#A8E6CF' }}>
-                          Total Bin Waste: {wasteData.totalWasteBinWeight.toFixed(2)} kg
+                          Total Bin Waste: {formatMass(wasteData.totalWasteBinWeight)}
                         </p>
                       )}
                     </div>
@@ -1404,16 +1514,16 @@ function AdminPanel() {
                             </div>
                             <div className="summary-item">
                               <span className="label">Total Quantity:</span>
-                              <span className="value">{Object.values(wasteData.leftovers || {}).reduce((a, b) => a + b, 0).toFixed(2)} kg</span>
+                              <span className="value">{formatMass(Object.values(wasteData.leftovers || {}).reduce((a, b) => a + b, 0))}</span>
                             </div>
                             <div className="summary-item">
                               <span className="label">Total %:</span>
-                              <span className="value">{wasteData.summary?.leftovers?.overallLeftoverPercentage ?? 0}%</span>
+                              <span className="value">{formatPercent(wasteData.summary?.leftovers?.overallLeftoverPercentage ?? 0)}%</span>
                             </div>
                             {wasteData.summary?.leftovers?.topLeftoverItem && (
                               <div className="summary-item">
                                 <span className="label">Top Leftover:</span>
-                                <span className="value">{wasteData.summary.leftovers.topLeftoverItem.item} ({wasteData.summary.leftovers.topLeftoverItem.quantity} kg)</span>
+                                <span className="value">{wasteData.summary.leftovers.topLeftoverItem.item} ({formatMass(wasteData.summary.leftovers.topLeftoverItem.quantity)})</span>
                               </div>
                             )}
                           </div>
@@ -1428,22 +1538,22 @@ function AdminPanel() {
                             </div>
                             <div className="summary-item">
                               <span className="label">Total Quantity:</span>
-                              <span className="value">{Object.values(wasteData.waste || {}).reduce((a, b) => a + b, 0).toFixed(2)} kg</span>
+                              <span className="value">{formatMass(Object.values(wasteData.waste || {}).reduce((a, b) => a + b, 0))}</span>
                             </div>
                             <div className="summary-item">
                               <span className="label">Total %:</span>
-                              <span className="value">{wasteData.summary?.waste?.overallWastePercentage ?? 0}%</span>
+                              <span className="value">{formatPercent(wasteData.summary?.waste?.overallWastePercentage ?? 0)}%</span>
                             </div>
                             {wasteData.summary?.waste?.topWastedItem && (
                               <div className="summary-item">
                                 <span className="label">Top Ingredient:</span>
-                                <span className="value">{wasteData.summary.waste.topWastedItem.item} ({wasteData.summary.waste.topWastedItem.quantity} kg)</span>
+                                <span className="value">{wasteData.summary.waste.topWastedItem.item} ({formatMass(wasteData.summary.waste.topWastedItem.quantity)})</span>
                               </div>
                             )}
                             {wasteData.summary?.waste?.topWastedRecipe && (
                               <div className="summary-item">
                                 <span className="label">Top Recipe:</span>
-                                <span className="value">{wasteData.summary.waste.topWastedRecipe.recipe} ({wasteData.summary.waste.topWastedRecipe.quantity} kg)</span>
+                                <span className="value">{wasteData.summary.waste.topWastedRecipe.recipe} ({formatMass(wasteData.summary.waste.topWastedRecipe.quantity)})</span>
                               </div>
                             )}
                           </div>
@@ -1458,16 +1568,16 @@ function AdminPanel() {
                             </div>
                             <div className="summary-item">
                               <span className="label">Total Quantity:</span>
-                              <span className="value">{Object.values(wasteData.totalLoss || {}).reduce((a, b) => a + b, 0).toFixed(2)} kg</span>
+                              <span className="value">{formatMass(Object.values(wasteData.totalLoss || {}).reduce((a, b) => a + b, 0))}</span>
                             </div>
                             <div className="summary-item">
                               <span className="label">Total %:</span>
-                              <span className="value">{wasteData.summary?.totalLoss?.overallLossPercentage ?? 0}%</span>
+                              <span className="value">{formatPercent(wasteData.summary?.totalLoss?.overallLossPercentage ?? 0)}%</span>
                             </div>
                             {wasteData.summary?.totalLoss?.topLossItem && (
                               <div className="summary-item">
                                 <span className="label">Top Loss Ingredient:</span>
-                                <span className="value">{wasteData.summary.totalLoss.topLossItem.item} ({wasteData.summary.totalLoss.topLossItem.quantity} kg)</span>
+                                <span className="value">{wasteData.summary.totalLoss.topLossItem.item} ({formatMass(wasteData.summary.totalLoss.topLossItem.quantity)})</span>
                               </div>
                             )}
                           </div>
@@ -1490,23 +1600,56 @@ function AdminPanel() {
                   {wasteView === 'breakdown' && (
                     <div className="waste-breakdown">
                       <h3>Detailed Ingredient Breakdown</h3>
+                      <p className="breakdown-note">Values below 1 kg are shown in grams so small waste is visible.</p>
+
+                      <div className="breakdown-overview">
+                        <div className="overview-card">
+                          <span className="overview-label">Total Waste %</span>
+                          <span className="overview-value">{formatPercent(overallWastePercentage)}%</span>
+                          <span className="overview-subtext">Overall ingredient waste rate</span>
+                        </div>
+
+                        <div className="overview-card">
+                          <span className="overview-label">Highest Waste Item</span>
+                          <span className="overview-value">{topWastedItem?.item || 'N/A'}</span>
+                          <span className="overview-subtext">
+                            {topWastedItem?.quantity !== undefined && topWastedItem?.quantity !== null
+                              ? `${formatMass(topWastedItem.quantity)} lost`
+                              : 'No waste data available'}
+                          </span>
+                        </div>
+
+                        <div className="overview-card">
+                          <span className="overview-label">Total Loss</span>
+                          <span className="overview-value">{formatMass(totalLossQuantity)}</span>
+                          <span className="overview-subtext">{formatPercent(overallLossPercentage)}% overall loss rate</span>
+                        </div>
+                      </div>
 
                       {wasteData.leftovers && Object.keys(wasteData.leftovers).length > 0 && (
-                        <div className="breakdown-section leftover-section">
-                          <h4>Leftover Ingredients (from Plates)</h4>
+                        <div className="breakdown-section section leftover-section">
+                          <h4 className="section-title">Leftover Ingredients (from Plates)</h4>
                           <div className="breakdown-table">
                             <div className="table-header">
                               <div className="col-item">Ingredient</div>
-                              <div className="col-qty">Expected (kg)</div>
-                              <div className="col-qty">Leftover (kg)</div>
+                              <div className="col-qty">Expected</div>
+                              <div className="col-qty">Leftover</div>
                               <div className="col-percent">Leftover %</div>
                             </div>
                             {Object.entries(wasteData.leftovers).map(([item, leftoverQty]) => (
                               <div key={`leftover-${item}`} className="table-row leftover-row">
                                 <div className="col-item">{item}</div>
-                                <div className="col-qty">{wasteData.totalIngredients[item]?.toFixed(2)}</div>
-                                <div className="col-qty">{leftoverQty?.toFixed(2) || 0}</div>
-                                <div className="col-percent">{wasteData.leftoverPercentage?.[item]}%</div>
+                                <div className="col-qty">{formatMass(wasteData.totalIngredients[item])}</div>
+                                <div className="col-qty">
+                                  {formatMassWithFallback(
+                                    leftoverQty,
+                                    wasteData.totalIngredients[item],
+                                    wasteData.leftoverPercentage?.[item]
+                                  )}
+                                </div>
+                                <div className={`col-percent ${getPercentClass(wasteData.leftoverPercentage?.[item])}`}>
+                                  {formatPercent(wasteData.leftoverPercentage?.[item])}%
+                                </div>
                               </div>
                             ))}
                           </div>
@@ -1514,21 +1657,29 @@ function AdminPanel() {
                       )}
 
                       {Object.keys(wasteData.waste).length > 0 && (
-                        <div className="breakdown-section waste-section">
-                          <h4>Waste Ingredients (from Bin)</h4>
+                        <div className="breakdown-section section waste-section">
+                          <h4 className="section-title">Waste Ingredients (from Bin)</h4>
                           <div className="breakdown-table">
                             <div className="table-header">
                               <div className="col-item">Ingredient</div>
-                              <div className="col-qty">Expected (kg)</div>
-                              <div className="col-qty">Waste (kg)</div>
+                              <div className="col-qty">Expected</div>
+                              <div className="col-qty">Waste</div>
                               <div className="col-percent">Waste %</div>
                             </div>
                             {Object.entries(wasteData.waste).map(([item, wasteQty]) => (
                               <div key={`waste-${item}`} className="table-row waste-row">
                                 <div className="col-item">{item}</div>
-                                <div className="col-qty">{wasteData.totalIngredients[item]?.toFixed(2)}</div>
-                                <div className="col-qty">{wasteQty?.toFixed(2) || 0}</div>
-                                <div className="col-percent">{wasteData.wastePercentage?.[item]}%</div>
+                                <div className="col-qty">{formatMass(wasteData.totalIngredients[item])}</div>
+                                <div className="col-qty">
+                                  {formatMassWithFallback(
+                                    wasteQty,
+                                    wasteData.totalIngredients[item],
+                                    wasteData.wastePercentage?.[item]
+                                  )}
+                                </div>
+                                <div className={`col-percent ${getPercentClass(wasteData.wastePercentage?.[item])}`}>
+                                  {formatPercent(wasteData.wastePercentage?.[item])}%
+                                </div>
                               </div>
                             ))}
                           </div>
@@ -1536,21 +1687,29 @@ function AdminPanel() {
                       )}
 
                       {wasteData.totalLoss && Object.keys(wasteData.totalLoss).length > 0 && (
-                        <div className="breakdown-section total-loss-section">
-                          <h4>Total Loss (Waste + Leftovers)</h4>
+                        <div className="breakdown-section section total-loss-section">
+                          <h4 className="section-title">Total Loss (Waste + Leftovers)</h4>
                           <div className="breakdown-table">
                             <div className="table-header">
                               <div className="col-item">Ingredient</div>
-                              <div className="col-qty">Expected (kg)</div>
-                              <div className="col-qty">Total Loss (kg)</div>
+                              <div className="col-qty">Expected</div>
+                              <div className="col-qty">Total Loss</div>
                               <div className="col-percent">Loss %</div>
                             </div>
                             {Object.entries(wasteData.totalLoss).map(([item, totalLossQty]) => (
                               <div key={`loss-${item}`} className="table-row loss-row">
                                 <div className="col-item">{item}</div>
-                                <div className="col-qty">{wasteData.totalIngredients[item]?.toFixed(2)}</div>
-                                <div className="col-qty">{totalLossQty?.toFixed(2) || 0}</div>
-                                <div className="col-percent">{wasteData.totalLossPercentage?.[item]}%</div>
+                                <div className="col-qty">{formatMass(wasteData.totalIngredients[item])}</div>
+                                <div className="col-qty">
+                                  {formatMassWithFallback(
+                                    totalLossQty,
+                                    wasteData.totalIngredients[item],
+                                    wasteData.totalLossPercentage?.[item]
+                                  )}
+                                </div>
+                                <div className={`col-percent ${getPercentClass(wasteData.totalLossPercentage?.[item])}`}>
+                                  {formatPercent(wasteData.totalLossPercentage?.[item])}%
+                                </div>
                               </div>
                             ))}
                           </div>

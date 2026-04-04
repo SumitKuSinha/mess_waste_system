@@ -99,13 +99,13 @@ router.get('/:date', authMiddleware, roleMiddleware('admin'), async (req, res) =
       const totalLoss = wasteQty + leftoverQty;
 
       if (wasteQty > 0) {
-        wasteMapFiltered[item] = parseFloat(wasteQty.toFixed(2));
+        wasteMapFiltered[item] = wasteQty;
       }
       if (leftoverQty > 0) {
-        leftoverMapFiltered[item] = parseFloat(leftoverQty.toFixed(2));
+        leftoverMapFiltered[item] = leftoverQty;
       }
       if (totalLoss > 0) {
-        totalLossMapFiltered[item] = parseFloat(totalLoss.toFixed(2));
+        totalLossMapFiltered[item] = totalLoss;
       }
 
       wastePercentage[item] = required > 0
