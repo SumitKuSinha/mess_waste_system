@@ -23,6 +23,7 @@ function StaffDashboard() {
     lunch: {},
     dinner: {}
   });
+  const [studentMessages, setStudentMessages] = useState([]);
 
   // Load user info on mount
   useEffect(() => {
@@ -282,6 +283,27 @@ function StaffDashboard() {
     }
   };
 
+  const fetchStudentMessages = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/response/message/all?_t=${Date.now()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setStudentMessages(Array.isArray(data.data) ? data.data : []);
+      } else {
+        setStudentMessages([]);
+      }
+    } catch (error) {
+      setStudentMessages([]);
+    }
+  };
+
   // Logout handler
   const handleLogout = () => {
     if (window.confirm('Are you sure you want to logout?')) {
@@ -326,6 +348,15 @@ function StaffDashboard() {
             onClick={() => setActiveTab('input')}
           >
             Record Waste
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'messages' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('messages');
+              fetchStudentMessages();
+            }}
+          >
+            Student Messages
           </button>
         </div>
 
@@ -629,6 +660,34 @@ function StaffDashboard() {
                   </div>
                 )}
               </>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'messages' && (
+          <div className="tab-content">
+            <div className="dashboard-header">
+              <h2>Student Messages</h2>
+              <button className="btn btn-primary" onClick={fetchStudentMessages} disabled={loading}>Refresh</button>
+            </div>
+
+            {studentMessages.length > 0 ? (
+              <div className="staff-message-list">
+                {studentMessages.map((item) => (
+                  <div key={item._id} className="staff-message-card">
+                    <div className="staff-message-head">
+                      <h4>{item.studentName}</h4>
+                      <span className="staff-message-date">{new Date(item.createdAt).toLocaleString()}</span>
+                    </div>
+                    <p className="staff-message-email">{item.studentEmail}</p>
+                    <p className="staff-message-text">{item.message}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state">
+                <p>No messages yet. Students have not sent any messages.</p>
+              </div>
             )}
           </div>
         )}

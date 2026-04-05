@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Coffee, UtensilsCrossed, Soup } from 'lucide-react';
 import '../styles/AdminPanel.css';
 
 function AdminPanel() {
@@ -7,6 +8,7 @@ function AdminPanel() {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [menuTab, setMenuTab] = useState('view');
+  const [menuMealTab, setMenuMealTab] = useState('breakfast');
   const [dashboardView, setDashboardView] = useState('overview');
   const [wasteView, setWasteView] = useState('summary');
   const [selectedWasteGraph, setSelectedWasteGraph] = useState('intro');
@@ -42,6 +44,7 @@ function AdminPanel() {
   const [wasteDate, setWasteDate] = useState('');
   const [wasteData, setWasteData] = useState(null);
   const [wasteHistory, setWasteHistory] = useState([]);
+  const [studentMessages, setStudentMessages] = useState([]);
 
   const buildChartEntries = (source, limit = 6) => {
     return Object.entries(source || {})
@@ -511,6 +514,12 @@ function AdminPanel() {
     fetchCalculationHistory();
   }, []);
 
+  useEffect(() => {
+    if (activeSection === 'student-messages') {
+      fetchStudentMessages();
+    }
+  }, [activeSection]);
+
   // Fetch dashboard stats for today
   const fetchDashboardStats = async () => {
     try {
@@ -586,6 +595,28 @@ function AdminPanel() {
       }
     } catch (error) {
       console.error('Error fetching calculation history:', error);
+    }
+  };
+
+  const fetchStudentMessages = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/response/message/all?_t=${Date.now()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setStudentMessages(Array.isArray(data.data) ? data.data : []);
+      } else {
+        setStudentMessages([]);
+      }
+    } catch (error) {
+      console.error('Error fetching student messages:', error);
+      setStudentMessages([]);
     }
   };
 
@@ -915,6 +946,14 @@ function AdminPanel() {
             <span className="nav-text">Waste Tracking</span>
           </button>
 
+          <button
+            className={`nav-item ${activeSection === 'student-messages' ? 'active' : ''}`}
+            onClick={() => setActiveSection('student-messages')}
+          >
+            <span className="nav-icon">✉</span>
+            <span className="nav-text">Student Messages</span>
+          </button>
+
           <div className="nav-divider"></div>
 
           <button className="nav-item logout" onClick={handleLogout}>
@@ -934,6 +973,7 @@ function AdminPanel() {
             {activeSection === 'menu' && 'Menu Management'}
             {activeSection === 'calculations' && 'Calculations'}
             {activeSection === 'waste' && 'Waste Tracking'}
+            {activeSection === 'student-messages' && 'Student Messages'}
           </h1>
           <div className="header-user">
             <span>Admin User</span>
@@ -1152,59 +1192,92 @@ function AdminPanel() {
                       />
                     </div>
 
-                    {/* Breakfast */}
-                    <div className="meal-section">
-                      <h4>Breakfast</h4>
-                      <div className="dishes-grid">
-                        {MENU_ITEMS.breakfast.map(dish => (
-                          <div key={dish} className="dish-checkbox">
-                            <input
-                              type="checkbox"
-                              id={`breakfast-${dish}`}
-                              checked={newMenu.breakfast.includes(dish)}
-                              onChange={() => toggleDish('breakfast', dish, false)}
-                            />
-                            <label htmlFor={`breakfast-${dish}`}>{dish}</label>
-                          </div>
-                        ))}
-                      </div>
+                    <div className="menu-meal-tabs">
+                      <button
+                        className={`menu-meal-tab-btn ${menuMealTab === 'breakfast' ? 'active' : ''}`}
+                        onClick={() => setMenuMealTab('breakfast')}
+                      >
+                        Breakfast
+                      </button>
+                      <button
+                        className={`menu-meal-tab-btn ${menuMealTab === 'lunch' ? 'active' : ''}`}
+                        onClick={() => setMenuMealTab('lunch')}
+                      >
+                        Lunch
+                      </button>
+                      <button
+                        className={`menu-meal-tab-btn ${menuMealTab === 'dinner' ? 'active' : ''}`}
+                        onClick={() => setMenuMealTab('dinner')}
+                      >
+                        Dinner
+                      </button>
                     </div>
 
-                    {/* Lunch */}
-                    <div className="meal-section">
-                      <h4>Lunch</h4>
-                      <div className="dishes-grid">
-                        {MENU_ITEMS.lunch.map(dish => (
-                          <div key={dish} className="dish-checkbox">
-                            <input
-                              type="checkbox"
-                              id={`lunch-${dish}`}
-                              checked={newMenu.lunch.includes(dish)}
-                              onChange={() => toggleDish('lunch', dish, false)}
-                            />
-                            <label htmlFor={`lunch-${dish}`}>{dish}</label>
-                          </div>
-                        ))}
+                    {menuMealTab === 'breakfast' && (
+                      <div className="meal-section meal-section-breakfast">
+                        <h4><Coffee className="meal-icon" /> Breakfast</h4>
+                        <div className="dishes-grid">
+                          {MENU_ITEMS.breakfast.map(dish => (
+                            <div
+                              key={dish}
+                              className={`dish-checkbox ${newMenu.breakfast.includes(dish) ? 'active' : ''}`}
+                            >
+                              <input
+                                type="checkbox"
+                                id={`breakfast-${dish}`}
+                                checked={newMenu.breakfast.includes(dish)}
+                                onChange={() => toggleDish('breakfast', dish, false)}
+                              />
+                              <label htmlFor={`breakfast-${dish}`}>{dish}</label>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
-                    {/* Dinner */}
-                    <div className="meal-section">
-                      <h4>Dinner</h4>
-                      <div className="dishes-grid">
-                        {MENU_ITEMS.dinner.map(dish => (
-                          <div key={dish} className="dish-checkbox">
-                            <input
-                              type="checkbox"
-                              id={`dinner-${dish}`}
-                              checked={newMenu.dinner.includes(dish)}
-                              onChange={() => toggleDish('dinner', dish, false)}
-                            />
-                            <label htmlFor={`dinner-${dish}`}>{dish}</label>
-                          </div>
-                        ))}
+                    {menuMealTab === 'lunch' && (
+                      <div className="meal-section meal-section-lunch">
+                        <h4><UtensilsCrossed className="meal-icon" /> Lunch</h4>
+                        <div className="dishes-grid">
+                          {MENU_ITEMS.lunch.map(dish => (
+                            <div
+                              key={dish}
+                              className={`dish-checkbox ${newMenu.lunch.includes(dish) ? 'active' : ''}`}
+                            >
+                              <input
+                                type="checkbox"
+                                id={`lunch-${dish}`}
+                                checked={newMenu.lunch.includes(dish)}
+                                onChange={() => toggleDish('lunch', dish, false)}
+                              />
+                              <label htmlFor={`lunch-${dish}`}>{dish}</label>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
+
+                    {menuMealTab === 'dinner' && (
+                      <div className="meal-section meal-section-dinner">
+                        <h4><Soup className="meal-icon" /> Dinner</h4>
+                        <div className="dishes-grid">
+                          {MENU_ITEMS.dinner.map(dish => (
+                            <div
+                              key={dish}
+                              className={`dish-checkbox ${newMenu.dinner.includes(dish) ? 'active' : ''}`}
+                            >
+                              <input
+                                type="checkbox"
+                                id={`dinner-${dish}`}
+                                checked={newMenu.dinner.includes(dish)}
+                                onChange={() => toggleDish('dinner', dish, false)}
+                              />
+                              <label htmlFor={`dinner-${dish}`}>{dish}</label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     <button
                       className="btn btn-primary"
@@ -1230,59 +1303,92 @@ function AdminPanel() {
                       />
                     </div>
 
-                    {/* Breakfast */}
-                    <div className="meal-section">
-                      <h4>Breakfast</h4>
-                      <div className="dishes-grid">
-                        {MENU_ITEMS.breakfast.map(dish => (
-                          <div key={dish} className="dish-checkbox">
-                            <input
-                              type="checkbox"
-                              id={`update-breakfast-${dish}`}
-                              checked={updateMenuData.breakfast.includes(dish)}
-                              onChange={() => toggleDish('breakfast', dish, true)}
-                            />
-                            <label htmlFor={`update-breakfast-${dish}`}>{dish}</label>
-                          </div>
-                        ))}
-                      </div>
+                    <div className="menu-meal-tabs">
+                      <button
+                        className={`menu-meal-tab-btn ${menuMealTab === 'breakfast' ? 'active' : ''}`}
+                        onClick={() => setMenuMealTab('breakfast')}
+                      >
+                        Breakfast
+                      </button>
+                      <button
+                        className={`menu-meal-tab-btn ${menuMealTab === 'lunch' ? 'active' : ''}`}
+                        onClick={() => setMenuMealTab('lunch')}
+                      >
+                        Lunch
+                      </button>
+                      <button
+                        className={`menu-meal-tab-btn ${menuMealTab === 'dinner' ? 'active' : ''}`}
+                        onClick={() => setMenuMealTab('dinner')}
+                      >
+                        Dinner
+                      </button>
                     </div>
 
-                    {/* Lunch */}
-                    <div className="meal-section">
-                      <h4>Lunch</h4>
-                      <div className="dishes-grid">
-                        {MENU_ITEMS.lunch.map(dish => (
-                          <div key={dish} className="dish-checkbox">
-                            <input
-                              type="checkbox"
-                              id={`update-lunch-${dish}`}
-                              checked={updateMenuData.lunch.includes(dish)}
-                              onChange={() => toggleDish('lunch', dish, true)}
-                            />
-                            <label htmlFor={`update-lunch-${dish}`}>{dish}</label>
-                          </div>
-                        ))}
+                    {menuMealTab === 'breakfast' && (
+                      <div className="meal-section meal-section-breakfast">
+                        <h4><Coffee className="meal-icon" /> Breakfast</h4>
+                        <div className="dishes-grid">
+                          {MENU_ITEMS.breakfast.map(dish => (
+                            <div
+                              key={dish}
+                              className={`dish-checkbox ${updateMenuData.breakfast.includes(dish) ? 'active' : ''}`}
+                            >
+                              <input
+                                type="checkbox"
+                                id={`update-breakfast-${dish}`}
+                                checked={updateMenuData.breakfast.includes(dish)}
+                                onChange={() => toggleDish('breakfast', dish, true)}
+                              />
+                              <label htmlFor={`update-breakfast-${dish}`}>{dish}</label>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
-                    {/* Dinner */}
-                    <div className="meal-section">
-                      <h4>Dinner</h4>
-                      <div className="dishes-grid">
-                        {MENU_ITEMS.dinner.map(dish => (
-                          <div key={dish} className="dish-checkbox">
-                            <input
-                              type="checkbox"
-                              id={`update-dinner-${dish}`}
-                              checked={updateMenuData.dinner.includes(dish)}
-                              onChange={() => toggleDish('dinner', dish, true)}
-                            />
-                            <label htmlFor={`update-dinner-${dish}`}>{dish}</label>
-                          </div>
-                        ))}
+                    {menuMealTab === 'lunch' && (
+                      <div className="meal-section meal-section-lunch">
+                        <h4><UtensilsCrossed className="meal-icon" /> Lunch</h4>
+                        <div className="dishes-grid">
+                          {MENU_ITEMS.lunch.map(dish => (
+                            <div
+                              key={dish}
+                              className={`dish-checkbox ${updateMenuData.lunch.includes(dish) ? 'active' : ''}`}
+                            >
+                              <input
+                                type="checkbox"
+                                id={`update-lunch-${dish}`}
+                                checked={updateMenuData.lunch.includes(dish)}
+                                onChange={() => toggleDish('lunch', dish, true)}
+                              />
+                              <label htmlFor={`update-lunch-${dish}`}>{dish}</label>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
+
+                    {menuMealTab === 'dinner' && (
+                      <div className="meal-section meal-section-dinner">
+                        <h4><Soup className="meal-icon" /> Dinner</h4>
+                        <div className="dishes-grid">
+                          {MENU_ITEMS.dinner.map(dish => (
+                            <div
+                              key={dish}
+                              className={`dish-checkbox ${updateMenuData.dinner.includes(dish) ? 'active' : ''}`}
+                            >
+                              <input
+                                type="checkbox"
+                                id={`update-dinner-${dish}`}
+                                checked={updateMenuData.dinner.includes(dish)}
+                                onChange={() => toggleDish('dinner', dish, true)}
+                              />
+                              <label htmlFor={`update-dinner-${dish}`}>{dish}</label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     <button
                       className="btn btn-primary"
@@ -1788,6 +1894,35 @@ function AdminPanel() {
                 <div className="empty-state">
                   <p>Select a date and click "View Waste Report" to see waste analysis</p>
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* STUDENT MESSAGES SECTION */}
+          {activeSection === 'student-messages' && (
+            <div className="page-section">
+              <div className="dashboard-header">
+                <h2>Student Messages</h2>
+                <button className="btn btn-primary" onClick={fetchStudentMessages} disabled={loading}>
+                  Refresh
+                </button>
+              </div>
+
+              {studentMessages.length > 0 ? (
+                <div className="admin-message-list">
+                  {studentMessages.map((item) => (
+                    <div key={item._id} className="admin-message-card">
+                      <div className="admin-message-head">
+                        <h4>{item.studentName}</h4>
+                        <span className="admin-message-date">{new Date(item.createdAt).toLocaleString()}</span>
+                      </div>
+                      <p className="admin-message-email">{item.studentEmail}</p>
+                      <p className="admin-message-text">{item.message}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-state"><p>No messages yet. Students have not sent any messages.</p></div>
               )}
             </div>
           )}

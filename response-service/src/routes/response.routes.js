@@ -2,9 +2,88 @@ const express = require("express");
 const router = express.Router();
 
 const Response = require("../models/response.model");
+const StudentMessage = require("../models/studentMessage.model");
 const authMiddleware = require("../middleware/auth");
 const { sendToQueue } = require("../utils/rabbitmq");
 const { setCache, getCache, deleteCache } = require("../config/redis");
+
+// submit a free-form message from student
+router.post("/message/submit", authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== "student") {
+      return res.status(403).json({ message: "Only students can submit messages" });
+    }
+
+    const { message, studentName, studentEmail } = req.body;
+
+    if (!message || !String(message).trim()) {
+      return res.status(400).json({ message: "Message is required" });
+    }
+
+    const payload = {
+      studentId: req.user.id,
+      studentName: String(studentName || "Student").trim(),
+      studentEmail: String(studentEmail || "unknown@local").trim(),
+      message: String(message).trim(),
+    };
+
+    const created = await StudentMessage.create(payload);
+
+    await deleteCache(`student-messages:student:${req.user.id}`);
+    await deleteCache("student-messages:admin-staff");
+
+    return res.status(201).json({ message: "Student message submitted", data: created });
+  } catch (error) {
+    console.error("Error submitting student message:", error.message);
+    return res.status(500).json({ message: "Error submitting student message" });
+  }
+});
+
+// get current student's messages
+router.get("/message/my", authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== "student") {
+      return res.status(403).json({ message: "Only students can view this resource" });
+    }
+
+    const cacheKey = `student-messages:student:${req.user.id}`;
+    const cached = await getCache(cacheKey);
+    if (cached) {
+      return res.status(200).json({ data: cached });
+    }
+
+    const messages = await StudentMessage.find({ studentId: req.user.id }).sort({ createdAt: -1 }).lean();
+    await setCache(cacheKey, messages, 300);
+
+    return res.status(200).json({ data: messages });
+  } catch (error) {
+    console.error("Error fetching student messages:", error.message);
+    return res.status(500).json({ message: "Error fetching student messages" });
+  }
+});
+
+// get all student messages (admin/staff)
+router.get("/message/all", authMiddleware, async (req, res) => {
+  try {
+    if (!["admin", "staff"].includes(req.user.role)) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const cacheKey = "student-messages:admin-staff";
+    const cached = await getCache(cacheKey);
+    if (cached) {
+      return res.status(200).json({ data: cached });
+    }
+
+    const messages = await StudentMessage.find({}).sort({ createdAt: -1 }).limit(200).lean();
+    await setCache(cacheKey, messages, 300);
+
+    return res.status(200).json({ data: messages });
+  } catch (error) {
+    console.error("Error fetching all student messages:", error.message);
+    return res.status(500).json({ message: "Error fetching all student messages" });
+  }
+});
 
 // submit response
 router.post("/submit", authMiddleware, async (req, res) => {

@@ -53,6 +53,39 @@
   gap: 1rem;
 }
 
+.notif-bell {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(145deg, #232323, #171717);
+  color: var(--text-light);
+  cursor: pointer;
+}
+
+.notif-bell-icon {
+  font-size: 1.05rem;
+}
+
+.notif-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--danger);
+  color: white;
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  border: 2px solid #15171b;
+}
+
 .btn-logout {
   padding: 0.6rem 1.2rem;
   background-color: var(--danger);
@@ -116,6 +149,11 @@
   margin-bottom: 0.8rem;
 }
 
+.student-notification-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 .student-notification-header h3 {
   margin: 0;
   color: var(--primary);
@@ -133,6 +171,16 @@
   border-radius: 8px;
   background: rgba(255, 140, 0, 0.06);
   border: 1px solid rgba(255, 140, 0, 0.14);
+}
+
+.student-notification-item.read {
+  opacity: 0.72;
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.student-notification-item.unread {
+  border-color: rgba(255, 140, 0, 0.32);
 }
 
 .student-notification-title-row {
@@ -153,6 +201,18 @@
   margin: 0;
   color: var(--text-light);
   font-size: 0.92rem;
+}
+
+.student-notification-mark-read {
+  margin-top: 0.6rem;
+  padding: 0.38rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 140, 0, 0.26);
+  background: rgba(255, 140, 0, 0.1);
+  color: #ffd3a7;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 /* TABS */
@@ -183,9 +243,9 @@
 }
 
 .student-tabs .tab-btn.active {
-  background-color: var(--primary);
-  color: white;
-  box-shadow: 0 -2px 8px rgba(255, 140, 0, 0.25);
+  background: linear-gradient(145deg, #2a2a2a, #1d1d1d);
+  color: #ffb366;
+  box-shadow: 0 0 0 1px rgba(255, 140, 0, 0.35), 0 -2px 10px rgba(255, 140, 0, 0.35);
 }
 
 /* TAB CONTENT */
@@ -225,6 +285,99 @@
   font-size: 0.95rem;
   color: var(--text-light);
   background-color: #1F1F1F;
+}
+
+.student-message-textarea {
+  width: 100%;
+  max-width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 14px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: var(--text-light);
+  resize: vertical;
+  min-height: 120px;
+}
+
+.student-message-textarea:focus {
+  outline: none;
+  border-color: #ff8c00;
+  box-shadow: 0 0 10px rgba(255, 140, 0, 0.2);
+}
+
+.student-messages-history {
+  margin-top: 0;
+}
+
+.student-messages-history h3 {
+  color: var(--text-dark);
+  margin-bottom: 1rem;
+}
+
+.student-messages-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  align-items: start;
+}
+
+.section {
+  margin-bottom: 30px;
+}
+
+.student-message-compose,
+.student-messages-history {
+  background: linear-gradient(145deg, #17181c, #101116);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.student-message-compose h3,
+.student-messages-history h3 {
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+.student-messages-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.message-card {
+  background: linear-gradient(145deg, #1a1a1a, #111111);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.message-card::before {
+  content: "";
+  display: block;
+  height: 3px;
+  width: 40px;
+  background: #ff8c00;
+  margin-bottom: 10px;
+}
+
+.student-message-card .date {
+  font-size: 12px;
+  color: #aaaaaa;
+  margin: 0 0 10px;
+}
+
+.student-message-card .message-text {
+  line-height: 1.6;
+  color: #dddddd;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.student-empty-messages {
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .form-group input:focus {
@@ -300,13 +453,14 @@
 }
 
 .btn-primary {
-  background-color: var(--primary);
+  background: linear-gradient(135deg, #ff8c00, #ff6a00);
   color: white;
 }
 
 .btn-primary:hover {
-  background-color: var(--primary-dark);
+  background: linear-gradient(135deg, #ff8c00, #ff6a00);
   box-shadow: 0 4px 8px rgba(255, 140, 0, 0.35);
+  transform: translateY(-2px);
 }
 
 .btn-primary:disabled {
@@ -543,6 +697,11 @@
 
   .responses-list {
     grid-template-columns: 1fr;
+  }
+
+  .student-messages-layout {
+    grid-template-columns: 1fr;
+    gap: 18px;
   }
 
   .response-header {

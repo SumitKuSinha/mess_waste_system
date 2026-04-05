@@ -124,33 +124,39 @@
 
 .staff-tabs .tab-btn {
   padding: 0.75rem 1.5rem;
-  background: none;
-  border: none;
+  background: linear-gradient(145deg, #242424, #1a1a1a);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-bottom: 3px solid transparent;
   cursor: pointer;
   font-weight: 600;
   color: var(--text-muted);
   transition: all 0.3s ease;
   font-size: 1rem;
+  border-radius: 8px 8px 0 0;
 }
 
 .staff-tabs .tab-btn:hover {
-  color: var(--primary);
+  color: var(--text-dark);
+  border-color: rgba(255, 140, 0, 0.3);
+  background: linear-gradient(145deg, #2a2a2a, #1f1f1f);
 }
 
 .staff-tabs .tab-btn.active {
-  background-color: var(--primary);
-  color: #FFFFFF;
-  border-radius: 6px 6px 0 0;
+  background: linear-gradient(145deg, #2a2a2a, #1d1d1d);
+  color: #ffb366;
+  border-radius: 8px 8px 0 0;
+  border-color: rgba(255, 140, 0, 0.5);
   border-bottom-color: transparent;
+  box-shadow: 0 0 0 1px rgba(255, 140, 0, 0.32), 0 -2px 10px rgba(255, 140, 0, 0.28);
 }
 
 /* TAB CONTENT */
 .tab-content {
   background: linear-gradient(145deg, #1a1a1a, #111111);
   padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.3);
 }
 
 .tab-content h2 {
@@ -337,7 +343,8 @@
 .input-mode-selector {
   background: linear-gradient(145deg, #1b1b1b, #121212);
   padding: 1.5rem;
-  border-radius: 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   margin-bottom: 2rem;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.26);
 }
@@ -385,10 +392,11 @@
 
 /* V2 FORM STYLING */
 .v2-form {
-  border: 2px solid var(--border);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   background: linear-gradient(145deg, #181818, #121212);
   padding: 2rem;
-  border-radius: 8px;
+  border-radius: 12px;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.24);
 }
 
 .total-waste-section {
@@ -419,6 +427,70 @@
   background-color: rgba(209, 213, 219, 0.1);
   border-left: 3px solid var(--text-muted);
   border-radius: 4px;
+}
+
+.staff-message-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.staff-message-card {
+  padding: 16px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #1a1a1a, #111111);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.staff-message-card::before {
+  content: "";
+  display: block;
+  height: 3px;
+  width: 40px;
+  background: #ff8c00;
+  margin-bottom: 10px;
+}
+
+.staff-message-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 140, 0, 0.3);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
+}
+
+.staff-message-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.45rem;
+}
+
+.staff-message-head h4 {
+  margin: 0;
+  color: var(--primary);
+}
+
+.staff-message-head span {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.staff-message-date {
+  font-size: 12px;
+  color: #aaaaaa;
+}
+
+.staff-message-email {
+  margin: 0 0 0.6rem;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.staff-message-text {
+  margin: 0;
+  line-height: 1.6;
+  color: #dddddd;
+  white-space: pre-wrap;
 }
 
 /* EMPTY STATE */

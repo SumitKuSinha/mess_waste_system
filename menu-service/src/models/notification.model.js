@@ -31,6 +31,20 @@ const notificationSchema = new mongoose.Schema(
       type: String,
       default: "admin",
     },
+    isRead: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    readAt: {
+      type: Date,
+      default: null,
+    },
+    readByUserId: {
+      type: String,
+      default: null,
+      index: true,
+    },
   },
   {
     timestamps: true,

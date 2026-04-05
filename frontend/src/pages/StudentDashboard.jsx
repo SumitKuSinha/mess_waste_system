@@ -11,6 +11,7 @@ function StudentDashboard() {
   const [message, setMessage] = useState('');
   const [user, setUser] = useState(null);
   const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // Response submission states
   const [response, setResponse] = useState({
@@ -25,6 +26,8 @@ function StudentDashboard() {
 
   // My responses states
   const [myResponses, setMyResponses] = useState([]);
+  const [myMessages, setMyMessages] = useState([]);
+  const [studentMessageInput, setStudentMessageInput] = useState('');
   const [responseToUpdate, setResponseToUpdate] = useState({
     id: '',
     date: '',
@@ -304,13 +307,119 @@ function StudentDashboard() {
 
       if (res.ok) {
         const data = await res.json();
-        setNotifications(Array.isArray(data.notifications) ? data.notifications : []);
+        const nextNotifications = Array.isArray(data.notifications) ? data.notifications : [];
+        setNotifications(nextNotifications);
+        if (typeof data.unreadCount === 'number') {
+          setUnreadCount(data.unreadCount);
+        } else {
+          setUnreadCount(nextNotifications.filter((item) => !item.isReadByCurrentUser).length);
+        }
       } else {
         setNotifications([]);
+        setUnreadCount(0);
       }
     } catch (error) {
       // Keep dashboard usable if notifications fail.
       setNotifications([]);
+      setUnreadCount(0);
+    }
+  };
+
+  const handleMarkNotificationRead = async (notificationId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`http://localhost:5000/api/menu/notifications/${notificationId}/read`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache'
+        }
+      });
+
+      if (res.ok) {
+        handleFetchNotifications();
+      }
+    } catch (error) {
+      // Non-blocking for dashboard UX.
+    }
+  };
+
+  const handleMarkAllNotificationsRead = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:5000/api/menu/notifications/read-all', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache'
+        }
+      });
+
+      if (res.ok) {
+        handleFetchNotifications();
+      }
+    } catch (error) {
+      // Non-blocking for dashboard UX.
+    }
+  };
+
+  const handleSubmitStudentMessage = async () => {
+    if (!studentMessageInput.trim()) {
+      setMessage('Please write a message before submitting');
+      return;
+    }
+
+    setLoading(true);
+    setMessage('');
+    try {
+      const token = localStorage.getItem('token');
+      const payload = {
+        message: studentMessageInput.trim(),
+        studentName: user?.name || 'Student',
+        studentEmail: user?.email || 'unknown@local'
+      };
+
+      const res = await fetch('http://localhost:5000/api/response/message/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        setStudentMessageInput('');
+        setMessage('[OK] Message sent to admin and staff');
+        setTimeout(() => setMessage(''), 2500);
+        handleFetchMyMessages();
+      } else {
+        const error = await res.json();
+        setMessage(`[ERR] Error: ${error.message || 'Failed to send message'}`);
+      }
+    } catch (error) {
+      setMessage(`[ERR] Error: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFetchMyMessages = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:5000/api/response/message/my', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache'
+        }
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setMyMessages(Array.isArray(data.data) ? data.data : []);
+      }
+    } catch (error) {
+      setMyMessages([]);
     }
   };
 
@@ -318,6 +427,7 @@ function StudentDashboard() {
   useEffect(() => {
     handleGetMyResponses();
     handleFetchNotifications();
+    handleFetchMyMessages();
 
     const intervalId = setInterval(() => {
       handleFetchNotifications();
@@ -355,6 +465,10 @@ function StudentDashboard() {
           <div className="header-user">
             <span>{user?.name || user?.email || 'Student'}</span>
           </div>
+          <button className="notif-bell" onClick={handleFetchNotifications} title="Refresh notifications">
+            <span className="notif-bell-icon">🔔</span>
+            {unreadCount > 0 && <span className="notif-badge">{unreadCount}</span>}
+          </button>
           <button 
             className="btn-logout"
             onClick={handleLogout}
@@ -377,16 +491,30 @@ function StudentDashboard() {
           <div className="student-notification-panel">
             <div className="student-notification-header">
               <h3>Menu Notifications</h3>
-              <button className="btn btn-secondary" onClick={handleFetchNotifications}>Refresh</button>
+              <div className="student-notification-actions">
+                <button className="btn btn-secondary" onClick={handleFetchNotifications}>Refresh</button>
+                <button className="btn btn-secondary" onClick={handleMarkAllNotificationsRead}>Mark All Read</button>
+              </div>
             </div>
             <div className="student-notification-list">
               {notifications.map((item) => (
-                <div key={item._id} className="student-notification-item">
+                <div
+                  key={item._id}
+                  className={`student-notification-item ${item.isReadByCurrentUser ? 'read' : 'unread'}`}
+                >
                   <div className="student-notification-title-row">
                     <strong>{item.title}</strong>
                     <span>{new Date(item.createdAt).toLocaleString()}</span>
                   </div>
                   <p>{item.message}</p>
+                  {!item.isReadByCurrentUser && (
+                    <button
+                      className="student-notification-mark-read"
+                      onClick={() => handleMarkNotificationRead(item._id)}
+                    >
+                      Mark as read
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -415,6 +543,15 @@ function StudentDashboard() {
             }}
           >
             My Responses
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'messages' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('messages');
+              handleFetchMyMessages();
+            }}
+          >
+            Messages
           </button>
         </div>
 
@@ -622,6 +759,56 @@ function StudentDashboard() {
                 <p>No responses submitted yet</p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* TAB: STUDENT MESSAGES */}
+        {activeTab === 'messages' && (
+          <div className="tab-content">
+            <h2>Student Messages</h2>
+
+            <div className="student-messages-layout">
+              <section className="section student-message-compose">
+                <h3>Send Message to Admin & Staff</h3>
+                <div className="form-group">
+                  <label>Your Message</label>
+                  <textarea
+                    className="student-message-textarea"
+                    rows="6"
+                    maxLength="1000"
+                    placeholder="Write your feedback, issue, or suggestion..."
+                    value={studentMessageInput}
+                    onChange={(e) => setStudentMessageInput(e.target.value)}
+                  />
+                </div>
+
+                <button
+                  className="btn btn-primary"
+                  onClick={handleSubmitStudentMessage}
+                  disabled={loading}
+                >
+                  {loading ? 'Sending...' : 'Send Message'}
+                </button>
+              </section>
+
+              <section className="section student-messages-history">
+                <h3>My Previous Messages</h3>
+                {myMessages.length > 0 ? (
+                  <div className="student-messages-list">
+                    {myMessages.map((item) => (
+                      <article key={item._id} className="message-card student-message-card">
+                        <p className="date">{new Date(item.createdAt).toLocaleString()}</p>
+                        <p className="message-text">{item.message}</p>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="empty-state student-empty-messages">
+                    <p>No messages yet. Send your first message.</p>
+                  </div>
+                )}
+              </section>
+            </div>
           </div>
         )}
 
